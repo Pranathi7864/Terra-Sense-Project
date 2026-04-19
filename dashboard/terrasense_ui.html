@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TERRA-SENSE | Defense CAR Monitoring</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg:       #020810;
+  --bg2:      #040d1a;
+  --bg3:      #061224;
+  --bg4:      #071528;
+  --green:    #00ff88;
+  --blue:     #00aaff;
+  --orange:   #ff8800;
+  --red:      #ff2244;
+  --yellow:   #ffcc00;
+  --text:     #e0f0ff;
+  --text2:    #7090aa;
+  --text3:    #304560;
+  --border:   #0a2040;
+  --border2:  #0f3060;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  display:flex;
+  flex-direction:column;
+}
+
+/* SCANLINE */
+body::before{
+  content:'';position:fixed;top:0;left:0;
+  width:100%;height:100%;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,20,40,0.12) 2px,rgba(0,20,40,0.12) 4px);
+  pointer-events:none;z-index:9999;
+}
+/* GRID BG */
+body::after{
+  content:'';position:fixed;top:0;left:0;
+  width:100%;height:100%;
+  background-image:linear-gradient(rgba(0,170,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,170,255,0.025) 1px,transparent 1px);
+  background-size:50px 50px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── HEADER ── */
+.header{
+  position:relative;z-index:100;
+  height:56px;
+  background:linear-gradient(180deg,#050f20 0%,rgba(4,13,26,0.95) 100%);
+  border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:0 28px;
+  flex-shrink:0;
+}
+.header::after{
+  content:'';position:absolute;bottom:-1px;left:0;
+  width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--blue),var(--green),var(--blue),transparent);
+}
+.logo-wrap{display:flex;align-items:center;gap:14px;}
+.logo-box{
+  width:36px;height:36px;
+  border:2px solid var(--green);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  box-shadow:0 0 16px rgba(0,255,136,0.4);
+  animation:glow-pulse 2s ease-in-out infinite;
+}
+@keyframes glow-pulse{0%,100%{box-shadow:0 0 16px rgba(0,255,136,0.4);}50%{box-shadow:0 0 32px rgba(0,255,136,0.7);}}
+.logo-title{
+  font-family:'Orbitron',monospace;font-size:20px;font-weight:800;letter-spacing:4px;
+  background:linear-gradient(90deg,var(--green),var(--blue));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.logo-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;}
+.header-right{display:flex;align-items:center;gap:20px;}
+.live-badge{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);letter-spacing:2px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 0.8s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+.sys-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid rgba(0,255,136,0.3);border-radius:4px;background:rgba(0,255,136,0.05);font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);letter-spacing:1px;}
+.sys-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s ease-in-out infinite;}
+.clock-disp{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--blue);letter-spacing:2px;}
+.classified-tag{font-family:'Share Tech Mono',monospace;font-size:9px;padding:4px 10px;border:1px solid var(--red);color:var(--red);letter-spacing:2px;border-radius:3px;background:rgba(255,34,68,0.05);}
+
+/* ── NAV ── */
+.nav{
+  position:relative;z-index:100;
+  height:52px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 28px;gap:8px;
+  flex-shrink:0;
+}
+.nav-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 20px;
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:6px;
+  color:var(--text2);
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;letter-spacing:2px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.nav-btn:hover{border-color:var(--border2);color:var(--text);}
+.nav-btn.active{
+  background:rgba(0,170,255,0.1);
+  border-color:var(--blue);
+  color:var(--blue);
+  box-shadow:0 0 12px rgba(0,170,255,0.2);
+}
+.nav-icon{font-size:14px;}
+
+/* ── CONTENT AREA ── */
+.content{
+  flex:1;overflow-y:auto;
+  position:relative;z-index:10;
+  padding:24px 28px;
+}
+.content::-webkit-scrollbar{width:4px;}
+.content::-webkit-scrollbar-track{background:var(--bg);}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── SCREEN ── */
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── CARDS ── */
+.card{
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;
+  width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--blue),transparent);
+}
+.card-title{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;letter-spacing:3px;
+  color:var(--text2);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-title::before{content:'//';color:var(--blue);}
+
+/* ── GRID HELPERS ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;}
+.grid-main{display:grid;grid-template-columns:300px 1fr;gap:20px;}
+.mb{margin-bottom:20px;}
+
+/* ── ZONE LIST ── */
+.zone-item{
+  padding:12px 16px;
+  border:1px solid var(--border);
+  border-radius:8px;cursor:pointer;
+  transition:all 0.2s;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  background:var(--bg4);margin-bottom:8px;
+}
+.zone-item:hover,.zone-item.active{border-color:var(--blue);background:rgba(0,170,255,0.05);}
+.zone-item.crit{border-color:rgba(255,34,68,0.4);background:rgba(255,34,68,0.05);animation:crit-pulse 2s ease-in-out infinite;}
+@keyframes crit-pulse{0%,100%{border-color:rgba(255,34,68,0.4);}50%{border-color:rgba(255,34,68,0.8);}}
+.zone-name{font-family:'Orbitron',monospace;font-size:12px;font-weight:600;letter-spacing:1px;}
+.zone-car-val{font-family:'Share Tech Mono',monospace;font-size:11px;margin-top:2px;}
+.risk-badge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:3px;}
+.rc{color:var(--red);background:rgba(255,34,68,0.1);}
+.rw{color:var(--orange);background:rgba(255,136,0,0.1);}
+.rwt{color:var(--yellow);background:rgba(255,204,0,0.1);}
+.rs{color:var(--green);background:rgba(0,255,136,0.1);}
+
+/* ── GAUGE ── */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:10px 0;}
+.gauge-svg{width:220px;height:130px;}
+
+/* ── ALERT BANNER ── */
+.alert-box{
+  padding:16px 20px;border-radius:8px;
+  display:flex;align-items:center;gap:16px;
+}
+.alert-box.crit{background:rgba(255,34,68,0.08);border:1px solid var(--red);box-shadow:0 0 20px rgba(255,34,68,0.3);animation:alert-glow 1s ease-in-out infinite;}
+.alert-box.stable{background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.3);}
+.alert-box.warn{background:rgba(255,136,0,0.08);border:1px solid rgba(255,136,0,0.4);}
+@keyframes alert-glow{0%,100%{box-shadow:0 0 20px rgba(255,34,68,0.3);}50%{box-shadow:0 0 40px rgba(255,34,68,0.6);}}
+.alert-icon{font-size:32px;flex-shrink:0;}
+.alert-title{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;letter-spacing:2px;margin-bottom:6px;}
+.alert-msg{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);line-height:1.7;}
+.alert-time{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);text-align:right;flex-shrink:0;min-width:120px;}
+
+/* ── METRIC BOX ── */
+.metric-box{
+  background:var(--bg4);border:1px solid var(--border);
+  border-radius:8px;padding:16px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.metric-box::after{content:'';position:absolute;bottom:0;left:0;height:2px;width:var(--w,50%);background:var(--c,var(--blue));transition:width 1s ease;}
+.m-label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--text2);margin-bottom:8px;}
+.m-val{font-family:'Orbitron',monospace;font-size:26px;font-weight:700;line-height:1;}
+.m-unit{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:4px;}
+.m-delta{font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:6px;opacity:0.7;}
+
+/* ── MAP SVG ── */
+.map-card{background:var(--bg4);border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.map-svg{width:100%;height:320px;}
+
+/* ── SENSOR GAUGE ── */
+.s-gauge-wrap{display:flex;flex-direction:column;align-items:center;}
+.s-gauge-svg{width:180px;height:110px;}
+
+/* ── CHART CONTAINER ── */
+.chart-wrap{position:relative;height:200px;}
+.chart-wrap-sm{position:relative;height:150px;}
+
+/* ── TABLE ── */
+.data-table{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:11px;}
+.data-table th{padding:10px 12px;text-align:left;color:var(--text2);letter-spacing:2px;border-bottom:1px solid var(--border);font-weight:400;font-size:9px;}
+.data-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);}
+.data-table tr:hover td{background:rgba(0,170,255,0.04);}
+
+/* ── PROGRESS BAR ── */
+.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:6px;}
+.prog-fill{height:100%;border-radius:3px;transition:width 1.5s ease;}
+
+/* ── RECOMMENDATION ── */
+.rec-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px;background:var(--bg4);
+  border:1px solid var(--border);border-radius:8px;
+  margin-bottom:10px;transition:all 0.2s;
+}
+.rec-item:hover{border-color:var(--border2);}
+.rec-phase{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:3px;flex-shrink:0;margin-top:2px;}
+.rec-text{font-family:'Rajdhani',sans-serif;font-size:15px;color:var(--text);line-height:1.5;}
+.rec-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:4px;}
+
+/* ── ILLEGAL PANEL ── */
+.ill-stat{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:11px;}
+.ill-stat:last-child{border-bottom:none;}
+.ill-key{color:var(--text2);}
+.ill-val{color:var(--text);font-weight:600;}
+
+/* ── MODEL CARD ── */
+.model-card{
+  background:var(--bg4);border:1px solid var(--border);
+  border-radius:8px;padding:16px;
+}
+.model-name{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--blue);margin-bottom:4px;}
+.model-desc{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-bottom:12px;line-height:1.6;}
+.model-acc{font-family:'Orbitron',monospace;font-size:28px;font-weight:800;color:var(--green);}
+.model-metric{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:4px;}
+
+/* ── TIMELINE ── */
+.timeline{position:relative;padding-left:24px;}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--border2);}
+.tl-item{position:relative;margin-bottom:20px;}
+.tl-dot{position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;border:2px solid;}
+.tl-time{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;margin-bottom:4px;}
+.tl-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;margin-bottom:2px;}
+.tl-desc{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);line-height:1.6;}
+
+/* ── SIM BUTTON ── */
+.sim-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,rgba(0,170,255,0.1),rgba(0,255,136,0.1));
+  border:1px solid var(--blue);border-radius:8px;
+  color:var(--blue);font-family:'Orbitron',monospace;
+  font-size:12px;font-weight:600;letter-spacing:3px;
+  cursor:pointer;transition:all 0.3s;
+  box-shadow:0 0 16px rgba(0,170,255,0.2);
+}
+.sim-btn:hover{background:linear-gradient(135deg,rgba(0,170,255,0.2),rgba(0,255,136,0.2));box-shadow:0 0 32px rgba(0,170,255,0.4);transform:translateY(-1px);}
+.sim-btn.running{border-color:var(--green);color:var(--green);animation:glow-pulse 1s ease-in-out infinite;}
+
+/* ── FOOTER ── */
+.footer{
+  position:relative;z-index:100;
+  height:32px;border-top:1px solid var(--border);
+  background:var(--bg2);
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:0 28px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;color:var(--text3);letter-spacing:1px;
+  flex-shrink:0;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.screen.active .card,.screen.active .metric-box,.screen.active .rec-item{animation:fadeIn 0.4s ease forwards;}
+
+/* INPUT */
+.inp{
+  width:100%;padding:10px 14px;
+  background:var(--bg4);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);
+  font-family:'Share Tech Mono',monospace;font-size:12px;
+  outline:none;transition:border-color 0.2s;
+}
+.inp:focus{border-color:var(--blue);}
+.inp-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:2px;margin-bottom:6px;display:block;}
+.inp-group{margin-bottom:14px;}
+.pred-btn{
+  width:100%;padding:12px;
+  background:rgba(0,170,255,0.1);border:1px solid var(--blue);
+  border-radius:6px;color:var(--blue);
+  font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;
+  cursor:pointer;transition:all 0.2s;margin-top:8px;
+}
+.pred-btn:hover{background:rgba(0,170,255,0.2);}
+.result-box{
+  padding:16px;background:rgba(0,255,136,0.05);
+  border:1px solid rgba(0,255,136,0.2);border-radius:8px;
+  margin-top:16px;display:none;
+}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:20px 0;}
+
+/* SECTION TITLE */
+.sec-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--blue);margin-bottom:16px;letter-spacing:2px;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo-wrap">
+    <div class="logo-box">🌍</div>
+    <div>
+      <div class="logo-title">TERRA-SENSE</div>
+      <div class="logo-sub">CYBER-PHYSICAL CAR MONITORING | CSIR-CMERI DEFENSE HACKATHON TRACK 2</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="sys-badge"><div class="sys-dot"></div>OPERATIONAL</div>
+    <div class="clock-disp" id="clock">--:--:--</div>
+    <div class="classified-tag">⬛ CLASSIFIED</div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="goTo('overview',this)">
+    <span class="nav-icon">🗺️</span> OVERVIEW
+  </button>
+  <button class="nav-btn" onclick="goTo('sensors',this)">
+    <span class="nav-icon">📡</span> SENSORS
+  </button>
+  <button class="nav-btn" onclick="goTo('models',this)">
+    <span class="nav-icon">🧠</span> AI MODELS
+  </button>
+  <button class="nav-btn" onclick="goTo('illegal',this)">
+    <span class="nav-icon">🕵️</span> ILLEGAL MINING
+  </button>
+  <button class="nav-btn" onclick="goTo('braas',this)">
+    <span class="nav-icon">🌱</span> BRaaS
+  </button>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ════════════════════════════════════════════
+     SCREEN 1 — OVERVIEW
+════════════════════════════════════════════ -->
+<div class="screen active" id="screen-overview">
+
+  <!-- Alert Banner -->
+  <div class="alert-box crit mb" id="alertBanner">
+    <div class="alert-icon">🚨</div>
+    <div style="flex:1">
+      <div class="alert-title" id="alertTitle" style="color:var(--red)">
+        CRITICAL — ZONE 1A TERRAIN COLLAPSE RISK
+      </div>
+      <div class="alert-msg" id="alertMsg">
+        CAR dropped to 0.196 — below critical threshold (0.25) &nbsp;|&nbsp;
+        Illegal mining suspected 600m NE &nbsp;|&nbsp;
+        Reroute convoy via NH-75 (+23 min) &nbsp;|&nbsp;
+        BRaaS deployment initiated
+      </div>
+    </div>
+    <div class="alert-time" id="alertTime">
+      ALERT GENERATED<br><span id="alertClock">--:--:--</span><br>SINGRAULI
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="grid-main mb">
+
+    <!-- Left: Zone List + Gauge -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Zone Selector -->
+      <div class="card">
+        <div class="card-title">ZONE STATUS — NH-39 CORRIDOR</div>
+        <div id="zoneList"></div>
+        <button class="sim-btn" id="simBtn" onclick="toggleSim()" style="margin-top:8px;">
+          ▶ START SIMULATION
+        </button>
+      </div>
+
+      <!-- CAR Gauge -->
+      <div class="card">
+        <div class="card-title">CAR INDEX — SELECTED ZONE</div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 220 130">
+            <path d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="#0a2040" stroke-width="14" stroke-linecap="round"/>
+            <path d="M 20 110 A 90 90 0 0 1 200 110" fill="none" id="gaugeFill"
+                  stroke="#ff2244" stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="283" stroke-dashoffset="237"/>
+            <text x="110" y="96"  id="gaugeVal"  style="font-family:'Orbitron',monospace;font-size:34px;font-weight:800;fill:#ff2244;text-anchor:middle;">0.196</text>
+            <text x="110" y="116" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#304560;text-anchor:middle;letter-spacing:3px;">CAR VALUE</text>
+            <text x="14"  y="126" style="font-family:'Share Tech Mono',monospace;font-size:8px;fill:#304560;">0.0</text>
+            <text x="103" y="22"  style="font-family:'Share Tech Mono',monospace;font-size:8px;fill:#304560;">0.5</text>
+            <text x="196" y="126" style="font-family:'Share Tech Mono',monospace;font-size:8px;fill:#304560;">1.0</text>
+          </svg>
+          <div id="gaugeRisk" class="risk-badge rc" style="font-size:13px;padding:6px 20px;">CRITICAL</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right: Map + Metrics -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- 4 Metrics -->
+      <div class="grid4">
+        <div class="metric-box" style="--w:19.6%;--c:#ff2244">
+          <div class="m-label">CURRENT CAR</div>
+          <div class="m-val" id="m-car" style="color:var(--red)">0.196</div>
+          <div class="m-unit">INDEX</div>
+          <div class="m-delta" style="color:var(--red)">↓ CRITICAL</div>
+        </div>
+        <div class="metric-box" style="--w:60%;--c:#ff8800">
+          <div class="m-label">CO₂ LEVEL</div>
+          <div class="m-val" id="m-co2" style="color:var(--orange)">720</div>
+          <div class="m-unit">PPM</div>
+          <div class="m-delta" style="color:var(--orange)">↑ HIGH</div>
+        </div>
+        <div class="metric-box" style="--w:18%;--c:#00aaff">
+          <div class="m-label">SOIL MOISTURE</div>
+          <div class="m-val" id="m-moist" style="color:var(--blue)">18.2</div>
+          <div class="m-unit">PERCENT</div>
+          <div class="m-delta" style="color:var(--blue)">↓ LOW</div>
+        </div>
+        <div class="metric-box" style="--w:63%;--c:#ff6600">
+          <div class="m-label">TEMPERATURE</div>
+          <div class="m-val" id="m-temp" style="color:#ff6600">31.4</div>
+          <div class="m-unit">CELSIUS</div>
+          <div class="m-delta" style="color:#ff6600">→ NORMAL</div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="card" style="flex:1">
+        <div class="card-title">SINGRAULI CORRIDOR — LIVE RISK MAP</div>
+        <svg class="map-svg" viewBox="0 0 700 280">
+          <!-- Background terrain -->
+          <rect width="700" height="280" fill="#040d18" rx="6"/>
+          <path d="M 0 200 Q 175 180 350 190 Q 525 200 700 185 L 700 280 L 0 280 Z" fill="#061224" opacity="0.5"/>
+
+          <!-- Grid lines -->
+          <line x1="0" y1="70"  x2="700" y2="70"  stroke="#0a2040" stroke-width="0.5"/>
+          <line x1="0" y1="140" x2="700" y2="140" stroke="#0a2040" stroke-width="0.5"/>
+          <line x1="0" y1="210" x2="700" y2="210" stroke="#0a2040" stroke-width="0.5"/>
+
+          <!-- NH-39 Road -->
+          <path d="M 40 155 Q 200 145 360 140 Q 520 135 660 128" fill="none" stroke="#1a3a5a" stroke-width="16"/>
+          <path d="M 40 155 Q 200 145 360 140 Q 520 135 660 128" fill="none" stroke="#0d2a4a" stroke-width="12"/>
+          <path d="M 40 155 Q 200 145 360 140 Q 520 135 660 128" fill="none" stroke="#1a3a5a" stroke-width="2" stroke-dasharray="12 6"/>
+          <text x="350" y="172" style="font-family:'Share Tech Mono',monospace;font-size:10px;fill:#1a3a6a;text-anchor:middle;letter-spacing:3px;">NH-39 DEFENSE CORRIDOR</text>
+
+          <!-- Mine areas -->
+          <ellipse cx="80"  cy="220" rx="55" ry="30" fill="rgba(255,204,0,0.04)" stroke="#ffcc00" stroke-width="1" stroke-dasharray="4 3"/>
+          <ellipse cx="180" cy="230" rx="45" ry="25" fill="rgba(255,204,0,0.04)" stroke="#ffcc00" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="80"  y="223" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#ffcc00;text-anchor:middle;">⛏ NCL</text>
+          <text x="180" y="233" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#ffcc00;text-anchor:middle;">⛏ NTPC</text>
+
+          <!-- Zone 1A - CRITICAL -->
+          <circle cx="80"  cy="155" r="40" fill="rgba(255,34,68,0.12)"  stroke="#ff2244" stroke-width="2" class="map-zone"/>
+          <circle cx="80"  cy="155" r="40" fill="none" stroke="#ff2244" stroke-width="1" stroke-dasharray="3 3" opacity="0.4">
+            <animateTransform attributeName="transform" type="rotate" from="0 80 155" to="360 80 155" dur="8s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Zone 2B -->
+          <circle cx="210" cy="148" r="38" fill="rgba(255,136,0,0.1)"  stroke="#ff8800" stroke-width="1.5"/>
+          <!-- Zone 3C -->
+          <circle cx="340" cy="142" r="36" fill="rgba(255,136,0,0.1)"  stroke="#ff8800" stroke-width="1.5"/>
+          <!-- Zone 4D -->
+          <circle cx="470" cy="136" r="36" fill="rgba(255,204,0,0.07)" stroke="#ffcc00" stroke-width="1.5"/>
+          <!-- Zone 5E -->
+          <circle cx="600" cy="130" r="36" fill="rgba(0,255,136,0.07)" stroke="#00ff88" stroke-width="1.5"/>
+
+          <!-- Zone Labels -->
+          <text x="80"  y="148" style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;fill:#ff2244;text-anchor:middle;">1A</text>
+          <text x="80"  y="163" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#ff2244;text-anchor:middle;">0.196</text>
+          <text x="80"  y="175" style="font-family:'Share Tech Mono',monospace;font-size:8px;fill:#ff2244;text-anchor:middle;opacity:0.7;">CRITICAL</text>
+
+          <text x="210" y="141" style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;fill:#ff8800;text-anchor:middle;">2B</text>
+          <text x="210" y="156" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#ff8800;text-anchor:middle;">0.413</text>
+
+          <text x="340" y="135" style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;fill:#ff8800;text-anchor:middle;">3C</text>
+          <text x="340" y="150" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#ff8800;text-anchor:middle;">0.412</text>
+
+          <text x="470" y="129" style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;fill:#ffcc00;text-anchor:middle;">4D</text>
+          <text x="470" y="144" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#ffcc00;text-anchor:middle;">0.587</text>
+
+          <text x="600" y="123" style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;fill:#00ff88;text-anchor:middle;">5E</text>
+          <text x="600" y="138" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#00ff88;text-anchor:middle;">0.757</text>
+
+          <!-- Sensor stake icons -->
+          <rect x="74"  cy="108" y="108" width="12" height="20" fill="#ff2244" opacity="0.6" rx="2"/>
+          <rect x="204" cy="102" y="102" width="12" height="20" fill="#ff8800" opacity="0.5" rx="2"/>
+          <rect x="334" cy="96"  y="96"  width="12" height="20" fill="#ff8800" opacity="0.5" rx="2"/>
+          <rect x="464" cy="90"  y="90"  width="12" height="20" fill="#ffcc00" opacity="0.4" rx="2"/>
+          <rect x="594" cy="84"  y="84"  width="12" height="20" fill="#00ff88" opacity="0.4" rx="2"/>
+
+          <!-- Distance markers -->
+          <text x="40"  y="270" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#1a3a5a;">KM 0</text>
+          <text x="165" y="270" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#1a3a5a;">KM 2</text>
+          <text x="295" y="270" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#1a3a5a;">KM 4</text>
+          <text x="425" y="270" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#1a3a5a;">KM 6</text>
+          <text x="555" y="270" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#1a3a5a;">KM 8</text>
+
+          <!-- Legend -->
+          <circle cx="20"  cy="20" r="5" fill="rgba(255,34,68,0.3)"  stroke="#ff2244" stroke-width="1"/>
+          <text x="30" y="24" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#304560;">CRITICAL</text>
+          <circle cx="100" cy="20" r="5" fill="rgba(255,136,0,0.3)"  stroke="#ff8800" stroke-width="1"/>
+          <text x="110" y="24" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#304560;">WARNING</text>
+          <circle cx="180" cy="20" r="5" fill="rgba(0,255,136,0.3)"  stroke="#00ff88" stroke-width="1"/>
+          <text x="190" y="24" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#304560;">STABLE</text>
+          <rect x="255" y="16" width="8" height="8" fill="#ffcc00" opacity="0.5" rx="1"/>
+          <text x="267" y="24" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#304560;">SENSOR STAKE</text>
+          <circle cx="360" cy="20" r="5" fill="rgba(255,204,0,0.1)" stroke="#ffcc00" stroke-width="1" stroke-dasharray="2 2"/>
+          <text x="370" y="24" style="font-family:'Share Tech Mono',monospace;font-size:9px;fill:#304560;">LEGAL MINE</text>
+        </svg>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2)">
+            COORDINATES: 24.12°N — 24.18°N | 82.67°E — 82.73°E | SENSOR SPACING: 500M
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CAR Trend Chart -->
+  <div class="card">
+    <div class="card-title">CAR TREND — 6 MONTH HISTORY (JAN–JUN 2024)</div>
+    <div class="chart-wrap">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 2 — SENSORS
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-sensors">
+
+  <div class="sec-title mb">📡 LIVE SENSOR READINGS — TACTICAL SOIL STAKE</div>
+
+  <!-- 4 Big Gauges -->
+  <div class="grid4 mb">
+
+    <!-- CO2 -->
+    <div class="card">
+      <div class="card-title">MQ-135 — CO₂ PROXY</div>
+      <div class="s-gauge-wrap">
+        <svg class="s-gauge-svg" viewBox="0 0 180 110">
+          <path d="M 15 95 A 75 75 0 0 1 165 95" fill="none" stroke="#0a2040" stroke-width="12" stroke-linecap="round"/>
+          <path d="M 15 95 A 75 75 0 0 1 165 95" fill="none" stroke="#ff2244" stroke-width="12" stroke-linecap="round" stroke-dasharray="236" stroke-dashoffset="94" id="sg-co2"/>
+          <text x="90" y="80"  style="font-family:'Orbitron',monospace;font-size:22px;font-weight:700;fill:#ff2244;text-anchor:middle;" id="sv-co2">720</text>
+          <text x="90" y="96"  style="font-family:'Share Tech Mono',monospace;font-size:8px;fill:#304560;text-anchor:middle;">PPM</text>
+          <text x="10" y="108" style="font-family:'Share Tech Mono',monospace;font-size:7px;fill:#304560;">380</text>
+          <text x="164" y="108" style="font-family:'Share Tech Mono',monospace;font-size:7px;fill:#304560;">1200</text>
+        </svg>
+        <div class="risk-badge rc">HIGH — DEGRADED</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:8px;text-align:center;">Healthy: 400-500 PPM<br>Critical: 700+ PPM</div>
+      </div>
+    </div>
+
+    <!-- MOISTURE -->
+    <div class="card">
+      <div class="card-title">CAPACITIVE — SOIL MOISTURE</div>
+      <div class="s-gauge-wrap">
+        <svg class="s-gauge-svg" viewBox="0 0 180 110">
+          <path d="M 15 95 A 75 75 0 0 1 165 95" fill="none" stroke="#0a2040" stroke-width="12" stroke-linecap="round"/>
+          <path d="M 15 95 A 75 75 0 0 1 165 95" fill="none" stroke="#00aaff" stroke-width="12" stroke-linecap="round" stroke-dasharray="236" stroke-dashoffset="193" id="sg-moist"/>
+          <text x="90" y="80"  style="font-family:'Orbitron',monospace;font-size:22px;font-weight:700;fill:#00aaff;text-anchor:middle;" id="sv-moist">18.2</text>
+          <text x="90" y="96"  style="font-family:'Share Tech Mono',monospace;font-size:8px;fill:#304560;text-anchor:middle;">PERCENT</text>
+          <text x="10" y="108" style="font-family:'Share Tech Mono',monospace;font-size:7px;fill:#304560;">0</text>
+          <text x="164" y="108" style="font-family:'Share Tech Mono',monospace;font-size:7px;fill:#304560;">100</text>
+        </svg>
+        <div class="risk-badge rc">LOW — CRITICAL</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:8px;text-align:center;">Healthy: 55-75%<br>Critical: below 20%</div>
+      </div>
+    </div>
+
+    <!-- TEMP -->
+    <div class="card">
+      <div class="card-title">DHT22 — TEMPERATURE</div>
+      <div class="s-gauge-wrap">
+        <svg class="s-gauge-svg" viewBox="0 0 180 110">
+          <path d="M 15 95 A 75 75 0 0 1 165 95" fill="none" stroke="#0a2040" stroke-width="12" stroke-linecap="round"/>
+          <path d="M 15 95 A 75 75 0 0 1 165 95" fill="none" stroke="#ff8800" stroke-width="12" stroke-linecap="round" stroke-dasharray="236" stroke-dashoffset="88" id="sg-temp"/>
+          <text x="90" y="80"  style="font-family:'Orbitron',monospace;font-size:22px;font-weight:700;fill:#ff8800;text-anchor:middle;" id="sv-temp">31.4</text>
+          <text x="90" y="96"  style="font-family:'Share Tech Mono',monospace;font-size:8px;fill:#304560;text-anchor:middle;">CELSIUS</text>
+          <text x="10" y="108" style="font-family:'Share Tech Mono',monospace;font-size:7px;fill:#304560;">0°C</text>
+          <text x="159" y="108" style="font-family:'Share Tech Mono',monospace;font-size:7px;fill:#304560;">50°C</text>
+        </svg>
+        <div class="risk-badge rw">MODERATE</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:8px;text-align:center;">Singrauli range: 8-47°C<br>Stress above: 38°C</div>
+      </div>
+    </div>
+
+    <!-- NDVI -->
+    <div class="card">
+      <div class="card-title">SATELLITE — NDVI INDEX</div>
+      <div class="s-gauge-wrap">
+        <svg class="s-gauge-svg" viewBox="0 0 180 110">
+          <path d="M 15 95 A 75 75 0 0 1 165 95" fill="none" stroke="#0a2040" stroke-width="12" stroke-linecap="round"/>
+          <path d="M 15 95 A 75 75 0 0 1 165 95" fill="none" stroke="#00ff88" stroke-width="12" stroke-linecap="round" stroke-dasharray="236" stroke-dashoffset="208" id="sg-ndvi"/>
+          <text x="90" y="80"  style="font-family:'Orbitron',monospace;font-size:22px;font-weight:700;fill:#00ff88;text-anchor:middle;" id="sv-ndvi">0.12</text>
+          <text x="90" y="96"  style="font-family:'Share Tech Mono',monospace;font-size:8px;fill:#304560;text-anchor:middle;">INDEX</text>
+          <text x="10" y="108" style="font-family:'Share Tech Mono',monospace;font-size:7px;fill:#304560;">0.0</text>
+          <text x="164" y="108" style="font-family:'Share Tech Mono',monospace;font-size:7px;fill:#304560;">1.0</text>
+        </svg>
+        <div class="risk-badge rc">BARREN — CRITICAL</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:8px;text-align:center;">Healthy: 0.6-1.0<br>Barren: below 0.3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2 mb">
+
+    <!-- Vibration -->
+    <div class="card">
+      <div class="card-title">SW-420 — VIBRATION SENSOR</div>
+      <div style="display:flex;align-items:center;gap:20px;padding:10px 0;">
+        <div style="width:80px;height:80px;border-radius:50%;border:3px solid var(--red);display:flex;align-items:center;justify-content:center;background:rgba(255,34,68,0.1);animation:crit-pulse 1s ease-in-out infinite;flex-shrink:0;">
+          <span style="font-size:32px;">📳</span>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--red);">DETECTED</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);margin-top:6px;line-height:1.8;">
+            Duration: 47 seconds<br>
+            Classification: MINING ACTIVITY<br>
+            Time: 03:14:22<br>
+            Status: <span style="color:var(--red);">SUSPICIOUS — NIGHT HOURS</span>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);line-height:1.8;">
+        FILTER LOGIC: Duration &gt; 3 sec = mining | Vehicle spike &lt; 3 sec = ignored<br>
+        PLACEMENT: 50cm below ground for optimal soil coupling<br>
+        ROAD DISTANCE: 10m — vehicle vibration reduced to 5%
+      </div>
+    </div>
+
+    <!-- Sensor Chart -->
+    <div class="card">
+      <div class="card-title">SENSOR TREND — LAST 48 HOURS</div>
+      <div class="chart-wrap">
+        <canvas id="sensorChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Manual Input -->
+  <div class="card">
+    <div class="card-title">MANUAL SENSOR INPUT — LIVE PREDICTION</div>
+    <div class="grid4">
+      <div class="inp-group">
+        <label class="inp-label">SOIL MOISTURE %</label>
+        <input class="inp" type="number" id="i-moist" value="35" min="0" max="100"/>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">CO₂ PPM</label>
+        <input class="inp" type="number" id="i-co2" value="500" min="380" max="1200"/>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">TEMPERATURE °C</label>
+        <input class="inp" type="number" id="i-temp" value="30" min="0" max="50"/>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">NDVI</label>
+        <input class="inp" type="number" id="i-ndvi" value="0.4" min="0" max="1" step="0.01"/>
+      </div>
+    </div>
+    <button class="pred-btn" onclick="predictCAR()">🔍 PREDICT CAR NOW</button>
+    <div class="result-box" id="predResult">
+      <div class="grid4">
+        <div><div class="m-label">PREDICTED CAR</div><div class="m-val" id="r-car" style="font-size:32px;"></div></div>
+        <div><div class="m-label">RISK LEVEL</div><div class="m-val" id="r-risk" style="font-size:20px;"></div></div>
+        <div><div class="m-label">ANOMALY</div><div class="m-val" id="r-anom" style="font-size:20px;"></div></div>
+        <div><div class="m-label">ACTION</div><div class="m-val" id="r-action" style="font-size:13px;line-height:1.4;"></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 3 — AI MODELS
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-models">
+
+  <div class="sec-title mb">🧠 AI PIPELINE — THREE MODEL ARCHITECTURE</div>
+
+  <!-- 3 Model Cards -->
+  <div class="grid3 mb">
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div class="model-name">XGBOOST REGRESSOR</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;">CURRENT CAR ESTIMATOR</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="model-acc">91%</div>
+          <div class="model-metric">R² SCORE</div>
+        </div>
+      </div>
+      <div class="model-desc">
+        Builds 200 sequential decision trees where each tree corrects errors of the previous. Estimates current CAR from 8 live sensor features in milliseconds.
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:91%;background:linear-gradient(90deg,var(--blue),var(--green));"></div></div>
+      <div class="divider"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);line-height:1.8;">
+        N_ESTIMATORS: 200 trees<br>
+        MAX_DEPTH: 6 levels<br>
+        LEARNING_RATE: 0.05<br>
+        RMSE: 0.042 | MAE: 0.031<br>
+        INPUT: 8 sensor features → OUTPUT: CAR (0-1)
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div class="model-name">LSTM FORECASTER</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;">6-24 HOUR PREDICTOR</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="model-acc">87%</div>
+          <div class="model-metric">ACCURACY</div>
+        </div>
+      </div>
+      <div class="model-desc">
+        Long Short-Term Memory network with forget, input and output gates. Remembers 48 hours of CAR history to predict terrain failure 6-24 hours ahead.
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:87%;background:linear-gradient(90deg,var(--blue),var(--green));"></div></div>
+      <div class="divider"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);line-height:1.8;">
+        HIDDEN_SIZE: 64 memory cells<br>
+        NUM_LAYERS: 2 stacked<br>
+        DROPOUT: 0.2<br>
+        EPOCHS: 30 | TEST_LOSS: 0.0038<br>
+        INPUT: 48 CAR values → OUTPUT: 24 future values
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div class="model-name">ISOLATION FOREST</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;">ANOMALY DETECTOR</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="model-acc">96%</div>
+          <div class="model-metric">DETECTION</div>
+        </div>
+      </div>
+      <div class="model-desc">
+        Learns normal sensor patterns during training. Anomalies are data points requiring very few random splits to isolate — indicating they are far from normal behavior.
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:96%;background:linear-gradient(90deg,var(--blue),var(--green));"></div></div>
+      <div class="divider"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);line-height:1.8;">
+        N_ESTIMATORS: 100 trees<br>
+        CONTAMINATION: 5%<br>
+        ANOMALY_RATE: 4.97%<br>
+        CATCHES: blasts, illegal mining, sinkholes<br>
+        INPUT: 8 features → OUTPUT: normal / anomaly
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2 mb">
+
+    <!-- LSTM Forecast Chart -->
+    <div class="card">
+      <div class="card-title">LSTM 12-HOUR FORECAST — ZONE 1A</div>
+      <div class="chart-wrap">
+        <canvas id="lstmChart"></canvas>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:rgba(255,34,68,0.05);border:1px solid rgba(255,34,68,0.2);border-radius:6px;">
+        <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--red);letter-spacing:2px;margin-bottom:4px;">⚠ LSTM PREDICTION</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);line-height:1.7;">
+          CAR predicted to reach 0.05 in ~9 hours<br>
+          Confidence: 87% | Trend: declining 0.008/hr<br>
+          Recommended action window: NEXT 2 HOURS
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Importance -->
+    <div class="card">
+      <div class="card-title">XGBOOST — FEATURE IMPORTANCE</div>
+      <div class="chart-wrap">
+        <canvas id="featureChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CAR Formula -->
+  <div class="card">
+    <div class="card-title">CAR CALCULATION FORMULA</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--green);line-height:2.2;padding:16px;background:var(--bg4);border-radius:6px;border:1px solid var(--border);">
+          CAR = (NDVI × <span style="color:var(--blue);">0.35</span>)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;+ (Moisture_norm × <span style="color:var(--blue);">0.25</span>)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;+ (CO2_inverse × <span style="color:var(--blue);">0.25</span>)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;+ (Temp_stress × <span style="color:var(--blue);">0.15</span>)
+        </div>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);line-height:2;">
+        <div>NDVI × 0.35 → <span style="color:var(--text)">Vegetation health (35% weight)</span></div>
+        <div>Moisture × 0.25 → <span style="color:var(--text)">Water retention (25% weight)</span></div>
+        <div>CO2_inv × 0.25 → <span style="color:var(--text)">Biological activity (25% weight)</span></div>
+        <div>Temp × 0.15 → <span style="color:var(--text)">Thermal stress (15% weight)</span></div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+          SW-420 vibration → <span style="color:var(--yellow)">NOT in CAR formula</span><br>
+          Used for: illegal mining detection only
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 4 — ILLEGAL MINING
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-illegal">
+
+  <div class="sec-title mb">🕵️ ILLEGAL MINING DETECTION MODULE</div>
+
+  <div class="grid2 mb">
+
+    <!-- Detection Result -->
+    <div class="card" style="border-color:rgba(255,34,68,0.4);background:rgba(255,34,68,0.04);">
+      <div class="card-title" style="color:var(--red);">ACTIVE DETECTION — ZONE 1A</div>
+      <div style="text-align:center;padding:16px 0;">
+        <div style="font-size:48px;margin-bottom:12px;">🚨</div>
+        <div style="font-family:'Orbitron',monospace;font-size:20px;font-weight:800;color:var(--red);letter-spacing:3px;margin-bottom:8px;">ILLEGAL MINING SUSPECTED</div>
+        <div style="font-family:'Orbitron',monospace;font-size:48px;font-weight:900;color:var(--red);">87%</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);letter-spacing:3px;">CONFIDENCE SCORE</div>
+      </div>
+      <div class="divider"></div>
+      <div class="ill-stat"><span class="ill-key">CAR DROP</span><span class="ill-val" style="color:var(--red);">0.469 in 24 hours</span></div>
+      <div class="ill-stat"><span class="ill-key">VIBRATION AT</span><span class="ill-val" style="color:var(--red);">03:14 AM — SUSPICIOUS</span></div>
+      <div class="ill-stat"><span class="ill-key">EST. DISTANCE</span><span class="ill-val">500m — 1km</span></div>
+      <div class="ill-stat"><span class="ill-key">DIRECTION</span><span class="ill-val">NORTH-EAST</span></div>
+      <div class="ill-stat"><span class="ill-key">NEAREST LEGAL MINE</span><span class="ill-val">NCL_JHINGURDA — 4.2km</span></div>
+      <div class="ill-stat"><span class="ill-key">OUTSIDE BOUNDARY</span><span class="ill-val" style="color:var(--red);">YES — 2.7km beyond limit</span></div>
+      <div class="ill-stat"><span class="ill-key">ALERT STATUS</span><span class="ill-val" style="color:var(--green);">✓ SENT TO DEFENSE HQ</span></div>
+      <div class="ill-stat"><span class="ill-key">DISTRICT COLLECTOR</span><span class="ill-val" style="color:var(--green);">✓ NOTIFIED</span></div>
+    </div>
+
+    <!-- Legal Mines DB -->
+    <div class="card">
+      <div class="card-title">LEGAL MINES DATABASE — SINGRAULI</div>
+      <div style="margin-bottom:12px;padding:10px;background:rgba(255,34,68,0.05);border:1px solid rgba(255,34,68,0.2);border-radius:6px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);line-height:1.7;">
+          ⬛ CLASSIFIED — AES-256 ENCRYPTED<br>
+          STORED ONLY AT HQ SERVER<br>
+          NEVER DISPLAYED AS COORDINATES ON SCREEN<br>
+          OFFICIAL SECRETS ACT — SECRET LEVEL
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>MINE NAME</th>
+            <th>OPERATOR</th>
+            <th>RADIUS</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--blue)">NTPC_VINDHYACHAL</td>
+            <td style="color:var(--text2)">NTPC Ltd</td>
+            <td>2.0 km</td>
+            <td style="color:var(--green)">ACTIVE ✓</td>
+          </tr>
+          <tr>
+            <td style="color:var(--blue)">NCL_JHINGURDA</td>
+            <td style="color:var(--text2)">NCL</td>
+            <td>1.5 km</td>
+            <td style="color:var(--green)">ACTIVE ✓</td>
+          </tr>
+          <tr>
+            <td style="color:var(--blue)">NCL_AMLOHRI</td>
+            <td style="color:var(--text2)">NCL</td>
+            <td>1.8 km</td>
+            <td style="color:var(--green)">ACTIVE ✓</td>
+          </tr>
+          <tr>
+            <td style="color:var(--blue)">RELIANCE_MOHER</td>
+            <td style="color:var(--text2)">Reliance</td>
+            <td>1.2 km</td>
+            <td style="color:var(--green)">ACTIVE ✓</td>
+          </tr>
+          <tr>
+            <td style="color:var(--blue)">NCL_KAKRI</td>
+            <td style="color:var(--text2)">NCL</td>
+            <td>1.3 km</td>
+            <td style="color:var(--green)">ACTIVE ✓</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="color:var(--red);text-align:center;font-size:10px;">⚠ ALERT SOURCE: OUTSIDE ALL LEGAL BOUNDARIES</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Detection Logic -->
+  <div class="card mb">
+    <div class="card-title">DETECTION ALGORITHM — CONFIDENCE SCORING</div>
+    <div class="grid3">
+      <div style="text-align:center;padding:16px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-family:'Orbitron',monospace;font-size:32px;font-weight:800;color:var(--red);">+40</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:4px;">CAR DROP &gt; 0.3<br>IN 24 HOURS</div>
+      </div>
+      <div style="text-align:center;padding:16px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-family:'Orbitron',monospace;font-size:32px;font-weight:800;color:var(--orange);">+35</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:4px;">VIBRATION<br>DETECTED</div>
+      </div>
+      <div style="text-align:center;padding:16px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-family:'Orbitron',monospace;font-size:32px;font-weight:800;color:var(--yellow);">+12</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:4px;">NIGHT HOURS<br>ACTIVITY</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px;padding:16px;background:rgba(255,34,68,0.05);border:1px solid rgba(255,34,68,0.2);border-radius:8px;">
+      <div style="font-family:'Orbitron',monospace;font-size:28px;font-weight:800;color:var(--red);">TOTAL = 87% CONFIDENCE</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);margin-top:6px;">THRESHOLD: 30% → INVESTIGATE | 60% → ALERT | 80% → CLASSIFIED DEFENSE ALERT</div>
+    </div>
+  </div>
+
+  <!-- Alert History -->
+  <div class="card">
+    <div class="card-title">ALERT HISTORY — ALL ZONES</div>
+    <table class="data-table">
+      <thead>
+        <tr><th>TIMESTAMP</th><th>ZONE</th><th>CAR</th><th>RISK</th><th>TYPE</th><th>ACTION TAKEN</th></tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:var(--text2)">03:14:22</td><td style="color:var(--blue)">Zone_1A</td><td style="color:var(--red)">0.187</td><td class="rc">CRITICAL</td><td>ILLEGAL MINING</td><td style="color:var(--green)">HQ NOTIFIED ✓</td></tr>
+        <tr><td style="color:var(--text2)">02:44:11</td><td style="color:var(--blue)">Zone_1A</td><td style="color:var(--red)">0.201</td><td class="rc">CRITICAL</td><td>CAR DROP</td><td style="color:var(--green)">CONVOY REROUTED ✓</td></tr>
+        <tr><td style="color:var(--text2)">01:12:55</td><td style="color:var(--blue)">Zone_2B</td><td style="color:var(--orange)">0.398</td><td class="rw">WARNING</td><td>CAR DROP</td><td style="color:var(--yellow)">MONITORING ↑</td></tr>
+        <tr><td style="color:var(--text2)">00:30:08</td><td style="color:var(--blue)">Zone_1A</td><td style="color:var(--red)">0.219</td><td class="rc">CRITICAL</td><td>VIBRATION</td><td style="color:var(--green)">TEAM DEPLOYED ✓</td></tr>
+        <tr><td style="color:var(--text2)">23:55:44</td><td style="color:var(--blue)">Zone_3C</td><td style="color:var(--orange)">0.401</td><td class="rw">WARNING</td><td>CO2 SPIKE</td><td style="color:var(--yellow)">UNDER REVIEW</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 5 — BRAAS
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-braas">
+
+  <div class="sec-title mb">🌱 BRaaS — BIOLOGICAL REMEDIATION AS A SERVICE</div>
+
+  <!-- Zone CAR Bars -->
+  <div class="card mb">
+    <div class="card-title">ALL ZONES — CAR COMPARISON</div>
+    <div class="chart-wrap-sm">
+      <canvas id="zoneChart"></canvas>
+    </div>
+  </div>
+
+  <div class="grid2 mb">
+
+    <!-- Recommendations -->
+    <div>
+      <div class="card-title" style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--text2);margin-bottom:16px;">// AUTO-GENERATED RECOMMENDATIONS — ZONE 1A</div>
+
+      <div class="rec-item">
+        <span class="rec-phase phase-immediate" style="color:var(--red);background:rgba(255,34,68,0.1);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:4px 8px;border-radius:3px;">IMMEDIATE</span>
+        <div>
+          <div class="rec-text">🚨 Reroute defense convoys away from Zone 1A</div>
+          <div class="rec-sub">NH-75 via Waidhan | +23 min delay | All zones stable on alternate route</div>
+        </div>
+      </div>
+
+      <div class="rec-item">
+        <span class="rec-phase phase-immediate" style="color:var(--red);background:rgba(255,34,68,0.1);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:4px 8px;border-radius:3px;">IMMEDIATE</span>
+        <div>
+          <div class="rec-text">🪖 Deploy military steel road plates on Zone 1A</div>
+          <div class="rec-sub">Standard MLC plates | Deployable in 30 min | Already in army inventory</div>
+        </div>
+      </div>
+
+      <div class="rec-item">
+        <span class="rec-phase" style="color:var(--orange);background:rgba(255,136,0,0.1);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:4px 8px;border-radius:3px;">SHORT TERM</span>
+        <div>
+          <div class="rec-text">🕳️ Backfill subsurface cavities with fly ash</div>
+          <div class="rec-sub">1-4 weeks | Prevents further ground sinking | NCL fly ash available locally</div>
+        </div>
+      </div>
+
+      <div class="rec-item">
+        <span class="rec-phase" style="color:var(--orange);background:rgba(255,136,0,0.1);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:4px 8px;border-radius:3px;">SHORT TERM</span>
+        <div>
+          <div class="rec-text">🌊 Install geo-drainage channels</div>
+          <div class="rec-sub">2-3 weeks | Restore moisture retention | Reduce surface runoff</div>
+        </div>
+      </div>
+
+      <div class="rec-item">
+        <span class="rec-phase" style="color:var(--green);background:rgba(0,255,136,0.1);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:4px 8px;border-radius:3px;">LONG TERM</span>
+        <div>
+          <div class="rec-text">🌱 Plant Vetiver grass across 2.3 km²</div>
+          <div class="rec-sub">Chrysopogon zizanioides | 13-foot roots stitch soil layers | 90-day biological restoration</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recovery Timeline -->
+    <div>
+      <div class="card-title" style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--text2);margin-bottom:16px;">// RECOVERY TIMELINE — ZONE 1A</div>
+
+      <div class="timeline">
+
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--red);border-color:var(--red);box-shadow:0 0 8px rgba(255,34,68,0.5);"></div>
+          <div class="tl-time">0 — 24 HOURS</div>
+          <div class="tl-title" style="color:var(--red)">Emergency Response</div>
+          <div class="tl-desc">Convoy rerouted via NH-75. Steel road plates deployed. HQ + District Collector alerted. Verification team dispatched.</div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--orange);border-color:var(--orange);box-shadow:0 0 8px rgba(255,136,0,0.5);"></div>
+          <div class="tl-time">1 — 4 WEEKS</div>
+          <div class="tl-title" style="color:var(--orange)">Structural Stabilization</div>
+          <div class="tl-desc">Subsurface cavities backfilled with fly ash and concrete. Drainage channels installed. Ground stabilizes — no further sinking.</div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--yellow);border-color:var(--yellow);box-shadow:0 0 8px rgba(255,204,0,0.5);"></div>
+          <div class="tl-time">1 — 3 MONTHS</div>
+          <div class="tl-title" style="color:var(--yellow)">Biological Restoration</div>
+          <div class="tl-desc">Vetiver grass planted across 2.3 km². Roots reach 4m depth binding soil layers. Microorganism colonies begin recovery. CAR starts rising.</div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--green);border-color:var(--green);box-shadow:0 0 8px rgba(0,255,136,0.5);"></div>
+          <div class="tl-time">3 — 6 MONTHS</div>
+          <div class="tl-title" style="color:var(--green)">Full Recovery</div>
+          <div class="tl-desc">CAR predicted to recover above 0.55 (WATCH level). Satellite NDVI confirms vegetation recovery. Convoy route re-opened. Steel plates removed.</div>
+        </div>
+
+      </div>
+
+      <!-- Recovery forecast chart -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">PREDICTED CAR RECOVERY — POST BRAAS</div>
+        <div class="chart-wrap-sm">
+          <canvas id="recoveryChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Vetiver Info -->
+  <div class="card">
+    <div class="card-title">VETIVER GRASS — BIOLOGICAL SOLUTION</div>
+    <div class="grid3">
+      <div style="text-align:center;padding:20px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:40px;margin-bottom:8px;">🌾</div>
+        <div style="font-family:'Orbitron',monospace;font-size:14px;color:var(--green);margin-bottom:6px;">4 METERS</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);">ROOT DEPTH<br>Physically stitches<br>soil layers together</div>
+      </div>
+      <div style="text-align:center;padding:20px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:40px;margin-bottom:8px;">🧬</div>
+        <div style="font-family:'Orbitron',monospace;font-size:14px;color:var(--blue);margin-bottom:6px;">LIVING REBAR</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);">ROOT NETWORK<br>Restores biological<br>carbon cycle</div>
+      </div>
+      <div style="text-align:center;padding:20px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:40px;margin-bottom:8px;">📈</div>
+        <div style="font-family:'Orbitron',monospace;font-size:14px;color:var(--orange);margin-bottom:6px;">90 DAYS</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);">RECOVERY TIME<br>CAR rises from<br>0.196 to 0.55+</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- end content -->
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span>TERRA-SENSE v1.0 | CSIR-CMERI DEFENSE HACKATHON TRACK 2 | SINGRAULI MINING CORRIDOR</span>
+  <span>AES-128 ENCRYPTED | ARMY-NET ISOLATED | SENSORS: 5 ACTIVE | ALERTS: 3 ACTIVE</span>
+  <span id="footerTime">--</span>
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────
+const zones=[
+  {id:'Zone_1A',car:0.196,risk:'CRITICAL',color:'#ff2244',cls:'crit rc'},
+  {id:'Zone_2B',car:0.413,risk:'WARNING', color:'#ff8800',cls:'rw'},
+  {id:'Zone_3C',car:0.412,risk:'WARNING', color:'#ff8800',cls:'rw'},
+  {id:'Zone_4D',car:0.587,risk:'WATCH',   color:'#ffcc00',cls:'rwt'},
+  {id:'Zone_5E',car:0.757,risk:'STABLE',  color:'#00ff88',cls:'rs'},
+];
+
+// ── CLOCK ─────────────────────────────────────
+function tick(){
+  const t=new Date().toLocaleTimeString('en-IN',{hour12:false});
+  const d=new Date().toLocaleDateString('en-IN');
+  document.getElementById('clock').textContent=t;
+  document.getElementById('footerTime').textContent=d+' '+t;
+  const ac=document.getElementById('alertClock');
+  if(ac)ac.textContent=t;
+}
+setInterval(tick,1000);tick();
+
+// ── NAV ───────────────────────────────────────
+function goTo(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  btn.classList.add('active');
+  initCharts(id);
+}
+
+// ── ZONE LIST ─────────────────────────────────
+function renderZones(){
+  document.getElementById('zoneList').innerHTML=zones.map((z,i)=>`
+    <div class="zone-item ${z.risk==='CRITICAL'?'crit':''} ${i===0?'active':''}"
+         onclick="selectZone(${i})">
+      <div>
+        <div class="zone-name" style="color:${z.color}">${z.id}</div>
+        <div class="zone-car-val" style="color:${z.color}">CAR: ${z.car.toFixed(3)}</div>
+      </div>
+      <div class="risk-badge ${z.cls.split(' ')[1]||z.cls}">${z.risk}</div>
+    </div>
+  `).join('');
+}
+renderZones();
+
+// ── SELECT ZONE ───────────────────────────────
+function selectZone(idx){
+  document.querySelectorAll('.zone-item').forEach((el,i)=>{
+    el.classList.toggle('active',i===idx);
+  });
+  const z=zones[idx];
+  const offset=283-(z.car*283);
+  const fill=document.getElementById('gaugeFill');
+  fill.style.strokeDashoffset=offset;
+  fill.setAttribute('stroke',z.color);
+  document.getElementById('gaugeVal').textContent=z.car.toFixed(3);
+  document.getElementById('gaugeVal').setAttribute('fill',z.color);
+  const rr=document.getElementById('gaugeRisk');
+  const cls={'CRITICAL':'rc','WARNING':'rw','WATCH':'rwt','STABLE':'rs'};
+  rr.textContent=z.risk;
+  rr.className='risk-badge '+cls[z.risk];
+  document.getElementById('m-car').textContent=z.car.toFixed(3);
+  document.getElementById('m-car').style.color=z.color;
+  const banner=document.getElementById('alertBanner');
+  if(z.risk==='CRITICAL'){
+    banner.className='alert-box crit';
+    document.getElementById('alertTitle').style.color='var(--red)';
+    document.getElementById('alertTitle').textContent='CRITICAL — '+z.id+' TERRAIN COLLAPSE RISK';
+    document.getElementById('alertMsg').textContent=
+      'CAR dropped to '+z.car.toFixed(3)+' — below critical threshold (0.25) | '+
+      'Illegal mining suspected | Reroute convoy via NH-75 | BRaaS initiated';
+  } else if(z.risk==='WARNING'){
+    banner.className='alert-box warn';
+    document.getElementById('alertTitle').style.color='var(--orange)';
+    document.getElementById('alertTitle').textContent='WARNING — '+z.id+' MONITORING';
+    document.getElementById('alertMsg').textContent=
+      'CAR = '+z.car.toFixed(3)+' | Watch closely | Begin afforestation planning';
+  } else {
+    banner.className='alert-box stable';
+    document.getElementById('alertTitle').style.color='var(--green)';
+    document.getElementById('alertTitle').textContent='STABLE — '+z.id+' ALL CLEAR';
+    document.getElementById('alertMsg').textContent='CAR = '+z.car.toFixed(3)+' | No action required | Continue monitoring';
+  }
+}
+
+// ── SIMULATE ──────────────────────────────────
+let simOn=false,simIv=null,simCar=0.65;
+function toggleSim(){
+  const btn=document.getElementById('simBtn');
+  simOn=!simOn;
+  if(simOn){
+    btn.textContent='⏹ STOP SIMULATION';btn.classList.add('running');
+    simCar=0.65;
+    simIv=setInterval(()=>{
+      simCar=Math.max(simCar-0.005+(Math.random()-0.6)*0.003,0.04);
+      zones[0].car=parseFloat(simCar.toFixed(3));
+      const c=simCar<0.25?'#ff2244':simCar<0.40?'#ff8800':simCar<0.65?'#ffcc00':'#00ff88';
+      const fill=document.getElementById('gaugeFill');
+      fill.style.strokeDashoffset=283-(simCar*283);
+      fill.setAttribute('stroke',c);
+      document.getElementById('gaugeVal').textContent=simCar.toFixed(3);
+      document.getElementById('gaugeVal').setAttribute('fill',c);
+      document.getElementById('m-car').textContent=simCar.toFixed(3);
+      document.getElementById('m-car').style.color=c;
+      renderZones();
+      if(simCar<=0.04){clearInterval(simIv);simOn=false;btn.textContent='▶ START SIMULATION';btn.classList.remove('running');}
+    },400);
+  } else {
+    clearInterval(simIv);
+    btn.textContent='▶ START SIMULATION';btn.classList.remove('running');
+  }
+}
+
+// ── PREDICT ───────────────────────────────────
+function predictCAR(){
+  const m=parseFloat(document.getElementById('i-moist').value)||35;
+  const c=parseFloat(document.getElementById('i-co2').value)||500;
+  const t=parseFloat(document.getElementById('i-temp').value)||30;
+  const n=parseFloat(document.getElementById('i-ndvi').value)||0.4;
+  const ndviN=n;
+  const mN=m/100;
+  const cInv=Math.max(0,1-((c-380)/(1200-380)));
+  const tS=Math.max(0,1-(Math.abs(t-25)/25));
+  const car=Math.min(1,Math.max(0,(ndviN*0.35)+(mN*0.25)+(cInv*0.25)+(tS*0.15)));
+  const risk=car>=0.65?'STABLE':car>=0.40?'WATCH':car>=0.25?'WARNING':'CRITICAL';
+  const colors={'STABLE':'#00ff88','WATCH':'#ffcc00','WARNING':'#ff8800','CRITICAL':'#ff2244'};
+  const recs={'STABLE':'No action needed. Continue monitoring.','WATCH':'Monitor closely. Plan afforestation.','WARNING':'Plant Vetiver. Backfill cavities. Improve drainage.','CRITICAL':'IMMEDIATE: Reroute convoys. Steel plates. Emergency Vetiver planting.'};
+  const anoms=car<0.25&&c>700?'⚠️ YES — ANOMALY':'✅ NO';
+  document.getElementById('r-car').textContent=car.toFixed(3);
+  document.getElementById('r-car').style.color=colors[risk];
+  document.getElementById('r-risk').textContent=risk;
+  document.getElementById('r-risk').style.color=colors[risk];
+  document.getElementById('r-anom').textContent=anoms;
+  document.getElementById('r-action').textContent=recs[risk];
+  document.getElementById('r-action').style.color=colors[risk];
+  const rb=document.getElementById('predResult');
+  rb.style.display='block';
+  rb.style.borderColor=colors[risk]+'44';
+  rb.style.background='rgba(0,0,0,0.2)';
+}
+
+// ── CHARTS ────────────────────────────────────
+let charts={};
+function initCharts(screen){
+  if(screen==='overview' && !charts.trend){
+    const months=['JAN','FEB','MAR','APR','MAY','JUN'];
+    const data=[0.65,0.58,0.50,0.42,0.32,0.20];
+    const addNoise=d=>d.map(v=>+(v+(Math.random()-0.5)*0.03).toFixed(3));
+    charts.trend=new Chart(document.getElementById('trendChart'),{
+      type:'line',
+      data:{
+        labels:months,
+        datasets:[
+          {label:'Zone 1A',data:addNoise([0.65,0.55,0.43,0.35,0.26,0.19]),borderColor:'#ff2244',backgroundColor:'rgba(255,34,68,0.05)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#ff2244'},
+          {label:'Zone 2B',data:addNoise([0.72,0.68,0.60,0.55,0.50,0.41]),borderColor:'#ff8800',backgroundColor:'rgba(255,136,0,0.03)',tension:0.4,fill:true,pointRadius:3},
+          {label:'Zone 5E',data:addNoise([0.80,0.78,0.77,0.76,0.76,0.75]),borderColor:'#00ff88',backgroundColor:'rgba(0,255,136,0.03)',tension:0.4,fill:true,pointRadius:3},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#7090aa',font:{family:'Share Tech Mono',size:10}}}},
+        scales:{
+          x:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:10}},grid:{color:'#0a2040'}},
+          y:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:10}},grid:{color:'#0a2040'},min:0,max:1,
+            title:{display:true,text:'CAR VALUE',color:'#304560',font:{family:'Share Tech Mono',size:9}}}
+        },
+        annotation:{annotations:{
+          l1:{type:'line',yMin:0.25,yMax:0.25,borderColor:'rgba(255,34,68,0.4)',borderDash:[4,4]},
+          l2:{type:'line',yMin:0.65,yMax:0.65,borderColor:'rgba(0,255,136,0.4)',borderDash:[4,4]},
+        }}
+      }
+    });
+  }
+
+  if(screen==='sensors' && !charts.sensor){
+    const hrs=Array.from({length:24},(_,i)=>i+':00');
+    charts.sensor=new Chart(document.getElementById('sensorChart'),{
+      type:'line',
+      data:{
+        labels:hrs,
+        datasets:[
+          {label:'CO₂ (×0.1)',data:Array.from({length:24},()=>+(6.5+(Math.random()-0.3)*1.2).toFixed(1)),borderColor:'#ff2244',tension:0.4,pointRadius:0,fill:false},
+          {label:'Moisture %',data:Array.from({length:24},()=>+(18+(Math.random()-0.5)*3).toFixed(1)),borderColor:'#00aaff',tension:0.4,pointRadius:0,fill:false},
+          {label:'NDVI ×10',data:Array.from({length:24},()=>+(1.2+(Math.random()-0.5)*0.3).toFixed(1)),borderColor:'#00ff88',tension:0.4,pointRadius:0,fill:false},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#7090aa',font:{family:'Share Tech Mono',size:10}}}},
+        scales:{
+          x:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:9},maxTicksLimit:8},grid:{color:'#0a2040'}},
+          y:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:9}},grid:{color:'#0a2040'}}
+        }
+      }
+    });
+  }
+
+  if(screen==='models' && !charts.lstm){
+    const hrs=Array.from({length:25},(_,i)=>i===0?'NOW':'+'+i+'H');
+    let c=0.196;
+    const forecast=Array.from({length:25},()=>{const v=c;c=Math.max(c-0.008+(Math.random()-0.5)*0.003,0.02);return +v.toFixed(3);});
+    charts.lstm=new Chart(document.getElementById('lstmChart'),{
+      type:'line',
+      data:{
+        labels:hrs,
+        datasets:[{
+          label:'Predicted CAR',data:forecast,
+          borderColor:'#00aaff',backgroundColor:'rgba(0,170,255,0.05)',
+          tension:0.4,fill:true,pointRadius:2,borderDash:[4,2]
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#7090aa',font:{family:'Share Tech Mono',size:10}}}},
+        scales:{
+          x:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:9},maxTicksLimit:8},grid:{color:'#0a2040'}},
+          y:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:9}},grid:{color:'#0a2040'},min:0,max:0.5,
+            title:{display:true,text:'PREDICTED CAR',color:'#304560',font:{family:'Share Tech Mono',size:9}}}
+        }
+      }
+    });
+
+    charts.feature=new Chart(document.getElementById('featureChart'),{
+      type:'bar',
+      data:{
+        labels:['NDVI','CO₂','MOISTURE','TEMP','VIBRATION','RAINFALL','MINING','HUMIDITY'],
+        datasets:[{
+          label:'Importance',
+          data:[35,25,25,15,8,6,5,4],
+          backgroundColor:['#00ff88','#ff2244','#00aaff','#ff8800','#ff2244','#00aaff','#ffcc00','#7090aa'],
+          borderRadius:4,
+        }]
+      },
+      options:{
+        indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:9}},grid:{color:'#0a2040'}},
+          y:{ticks:{color:'#7090aa',font:{family:'Share Tech Mono',size:10}},grid:{display:false}}
+        }
+      }
+    });
+  }
+
+  if(screen==='braas' && !charts.zone){
+    charts.zone=new Chart(document.getElementById('zoneChart'),{
+      type:'bar',
+      data:{
+        labels:['Zone_1A','Zone_2B','Zone_3C','Zone_4D','Zone_5E'],
+        datasets:[{
+          label:'Average CAR',
+          data:[0.196,0.413,0.412,0.587,0.757],
+          backgroundColor:['#ff2244','#ff8800','#ff8800','#ffcc00','#00ff88'],
+          borderRadius:6,
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{color:'#7090aa',font:{family:'Share Tech Mono',size:10}},grid:{display:false}},
+          y:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:9}},grid:{color:'#0a2040'},min:0,max:1}
+        }
+      }
+    });
+
+    const days=Array.from({length:13},(_,i)=>i===0?'NOW':'W'+i);
+    let r=0.196;
+    const rec=Array.from({length:13},()=>{const v=r;r=Math.min(r+0.04+(Math.random()-0.3)*0.01,0.75);return +v.toFixed(3);});
+    charts.recovery=new Chart(document.getElementById('recoveryChart'),{
+      type:'line',
+      data:{
+        labels:days,
+        datasets:[{
+          label:'CAR Recovery',data:rec,
+          borderColor:'#00ff88',backgroundColor:'rgba(0,255,136,0.07)',
+          tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#00ff88'
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#7090aa',font:{family:'Share Tech Mono',size:10}}}},
+        scales:{
+          x:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:9}},grid:{color:'#0a2040'}},
+          y:{ticks:{color:'#304560',font:{family:'Share Tech Mono',size:9}},grid:{color:'#0a2040'},min:0,max:1}
+        }
+      }
+    });
+  }
+}
+
+// Init overview charts on load
+setTimeout(()=>initCharts('overview'),200);
+</script>
+</body>
+</html>

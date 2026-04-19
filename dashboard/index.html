@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TERRA-SENSE | Terrain Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --ink:#0f1923;--ink2:#1c2a38;--ink3:#243447;
+  --surface:#f4f6f9;--surface2:#eaecf0;--surface3:#dde1e8;
+  --white:#ffffff;
+  --text:#0f1923;--text2:#4a5a6b;--text3:#8a9aab;--text4:#bbc4ce;
+  --emerald:#00c87a;--emerald-bg:#e6f9f1;
+  --amber:#f59e0b;--amber-bg:#fef3cd;
+  --rose:#f43f5e;--rose-bg:#fde8ec;
+  --sky:#0ea5e9;--sky-bg:#e0f2fe;
+  --violet:#8b5cf6;--violet-bg:#ede9fe;
+  --border:rgba(15,25,35,0.08);--border2:rgba(15,25,35,0.14);
+  --shadow-sm:0 1px 3px rgba(15,25,35,0.08),0 1px 2px rgba(15,25,35,0.06);
+  --shadow:0 4px 12px rgba(15,25,35,0.10),0 2px 4px rgba(15,25,35,0.06);
+  --radius:14px;--radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;font-size:14px;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px;}
+
+/* LAYOUT */
+.layout{display:flex;height:100%;}
+
+/* SIDEBAR */
+.sidebar{width:232px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;}
+.sidebar-logo{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.logo-mark{display:flex;align-items:center;gap:10px;margin-bottom:3px;}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--emerald),#00a862);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 16px rgba(0,200,122,0.35);}
+.logo-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#fff;}
+.logo-tag{font-size:10px;color:rgba(255,255,255,0.3);padding-left:42px;letter-spacing:0.3px;}
+.sidebar-sec{padding:18px 10px 6px;}
+.sidebar-label{font-size:10px;font-weight:600;color:rgba(255,255,255,0.22);letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin-bottom:5px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;cursor:pointer;transition:all 0.15s;color:rgba(255,255,255,0.45);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.75);}
+.nav-item.active{background:rgba(0,200,122,0.14);color:var(--emerald);}
+.nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
+.nav-alert{margin-left:auto;font-size:10px;font-weight:700;background:var(--rose);color:#fff;border-radius:10px;padding:2px 7px;}
+.sidebar-bottom{margin-top:auto;padding:14px 10px;border-top:1px solid rgba(255,255,255,0.06);}
+
+/* CONNECTION STATUS */
+.conn-pill{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:7px;margin-bottom:8px;transition:all 0.3s;}
+.conn-pill.live{background:rgba(0,200,122,0.12);border:1px solid rgba(0,200,122,0.2);}
+.conn-pill.offline{background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.2);}
+.conn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.conn-pill.live .conn-dot{background:var(--emerald);box-shadow:0 0 6px var(--emerald);animation:pulse 2s ease-in-out infinite;}
+.conn-pill.offline .conn-dot{background:var(--amber);}
+.conn-text{font-size:11px;font-weight:600;}
+.conn-pill.live .conn-text{color:rgba(255,255,255,0.7);}
+.conn-pill.offline .conn-text{color:rgba(255,255,255,0.5);}
+.conn-sub{font-size:10px;margin-left:auto;}
+.conn-pill.live .conn-sub{color:var(--emerald);}
+.conn-pill.offline .conn-sub{color:var(--amber);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+.clock-wrap{font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.2);text-align:center;padding:0 4px;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:58px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;box-shadow:var(--shadow-sm);}
+.topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.topbar-sub{font-size:12px;color:var(--text3);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.tb-badge{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;}
+.tb-badge.live{background:var(--rose-bg);color:var(--rose);}
+.tb-badge.secure{background:var(--emerald-bg);color:#059c5e;}
+.tb-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 1s ease-in-out infinite;}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--sky),var(--violet));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:20px 24px;}
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.card-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.g-main{display:grid;grid-template-columns:300px 1fr;gap:14px;}
+.mb{margin-bottom:14px;}
+
+/* STAT */
+.stat{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:box-shadow 0.2s;}
+.stat:hover{box-shadow:var(--shadow);}
+.stat::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent,var(--sky));border-radius:2px 0 0 2px;}
+.stat-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px;}
+.stat-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1;transition:all 0.5s;}
+.stat-unit{font-size:11px;color:var(--text3);margin-top:3px;}
+.stat-trend{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;margin-top:7px;}
+.stat-bar{height:3px;background:var(--surface2);border-radius:2px;margin-top:10px;}
+.stat-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(0.4,0,0.2,1);}
+
+/* ALERT */
+.alert{padding:14px 16px;border-radius:var(--radius);display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;transition:all 0.4s;}
+.alert.critical{background:var(--rose-bg);border:1px solid rgba(244,63,94,0.2);}
+.alert.warning{background:var(--amber-bg);border:1px solid rgba(245,158,11,0.25);}
+.alert.stable{background:var(--emerald-bg);border:1px solid rgba(0,200,122,0.25);}
+.alert-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.alert.critical .alert-icon{background:rgba(244,63,94,0.15);}
+.alert.warning  .alert-icon{background:rgba(245,158,11,0.15);}
+.alert.stable   .alert-icon{background:rgba(0,200,122,0.15);}
+.alert-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:3px;}
+.alert.critical .alert-title{color:var(--rose);}
+.alert.warning  .alert-title{color:#b45309;}
+.alert.stable   .alert-title{color:#059c5e;}
+.alert-msg{font-size:12px;color:var(--text2);line-height:1.6;}
+.alert-time{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0;text-align:right;white-space:nowrap;}
+
+/* ZONE */
+.zone-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:7px;cursor:pointer;transition:all 0.15s;border:1px solid transparent;margin-bottom:5px;}
+.zone-row:hover{background:var(--surface);border-color:var(--border);}
+.zone-row.active{background:var(--ink);border-color:var(--ink);}
+.zone-row.active .zone-id,.zone-row.active .zone-car{color:rgba(255,255,255,0.9);}
+.zone-color{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.zone-id{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;}
+.zone-car{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-top:1px;transition:all 0.4s;}
+.zone-badge{margin-left:auto;font-size:10px;font-weight:600;padding:3px 9px;border-radius:10px;}
+
+/* PILL */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.pill.green{background:var(--emerald-bg);color:#059c5e;}
+.pill.red{background:var(--rose-bg);color:var(--rose);}
+.pill.amber{background:var(--amber-bg);color:#b45309;}
+.pill.sky{background:var(--sky-bg);color:#0369a1;}
+.pill.violet{background:var(--violet-bg);color:#7c3aed;}
+.pill.grey{background:var(--surface2);color:var(--text3);}
+
+/* GAUGE CARD */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:6px 0;}
+
+/* SENSOR GAUGE */
+.s-gauge-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);text-align:center;}
+
+/* TABLE */
+.t{width:100%;border-collapse:collapse;}
+.t th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;}
+.t td{padding:10px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);}
+.t tr:last-child td{border-bottom:none;}
+.t tbody tr:hover td{background:var(--surface);}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:14px 0;}
+
+/* INPUT */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;letter-spacing:0.3px;}
+.inp{width:100%;padding:8px 11px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;}
+.inp:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(14,165,233,0.1);}
+
+/* BUTTON */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;border:none;}
+.btn-primary{background:var(--ink);color:#fff;}
+.btn-primary:hover{background:var(--ink2);box-shadow:var(--shadow);}
+.btn-full{width:100%;}
+
+/* SIM BTN */
+.sim-btn{width:100%;padding:10px;background:var(--ink);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;}
+.sim-btn:hover{background:var(--ink2);}
+.sim-btn.running{background:linear-gradient(135deg,#059c5e,var(--emerald));}
+
+/* PROGRESS */
+.prog{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.prog-bar{height:100%;border-radius:3px;transition:width 1s cubic-bezier(0.4,0,0.2,1);}
+
+/* REC */
+.rec{display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface);margin-bottom:9px;transition:all 0.15s;}
+.rec:hover{box-shadow:var(--shadow-sm);background:var(--white);}
+.rec-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.rec-phase{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:10px;margin-bottom:4px;}
+.rec-text{font-size:13px;color:var(--text);font-weight:500;margin-bottom:2px;}
+.rec-sub{font-size:11px;color:var(--text3);}
+
+/* TIMELINE */
+.tl{padding-left:18px;position:relative;}
+.tl::before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--surface2);border-radius:1px;}
+.tl-item{position:relative;margin-bottom:20px;padding-left:18px;}
+.tl-dot{position:absolute;left:-19px;top:5px;width:11px;height:11px;border-radius:50%;border:2px solid;background:var(--white);}
+.tl-phase{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.tl-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.tl-desc{font-size:11px;color:var(--text3);line-height:1.6;}
+
+/* MODEL */
+.model-item{padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.model-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:1px;}
+.model-role{font-size:10px;color:var(--text3);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:9px;}
+.model-acc{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;}
+.model-metric{font-size:10px;color:var(--text3);margin-top:1px;}
+.model-desc{font-size:11px;color:var(--text2);line-height:1.6;margin-top:9px;}
+.strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+.strip-item{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);padding:3px 8px;background:var(--surface2);border-radius:5px;}
+
+/* INFO ROW */
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);}
+.info-row:last-child{border-bottom:none;}
+.info-key{font-size:12px;color:var(--text3);}
+.info-val{font-size:12px;color:var(--text);font-weight:600;font-family:'DM Mono',monospace;}
+
+/* SECTION HEADING */
+.sh{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:var(--text);margin-bottom:3px;}
+.sh-sub{font-size:12px;color:var(--text3);margin-bottom:18px;}
+
+/* CONF */
+.conf-item{margin-bottom:11px;}
+.conf-header{display:flex;justify-content:space-between;margin-bottom:4px;}
+.conf-label{font-size:12px;color:var(--text2);font-weight:500;}
+.conf-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;}
+
+/* FADE */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.screen.active .card,.screen.active .stat,.screen.active .alert,.screen.active .model-item,.screen.active .rec{animation:fadeUp 0.3s ease both;}
+.screen.active .stat:nth-child(2){animation-delay:0.04s;}
+.screen.active .stat:nth-child(3){animation-delay:0.08s;}
+.screen.active .stat:nth-child(4){animation-delay:0.12s;}
+
+/* LIVE INDICATOR */
+.live-ring{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--emerald);box-shadow:0 0 6px var(--emerald);animation:pulse 1.5s ease-in-out infinite;margin-right:5px;}
+.offline-ring{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:5px;}
+
+/* DATASET MODE BANNER */
+.mode-bar{padding:8px 16px;font-size:12px;font-weight:600;text-align:center;display:none;}
+.mode-bar.show{display:block;}
+.mode-bar.dataset{background:var(--amber-bg);color:#b45309;border-bottom:1px solid rgba(245,158,11,0.25);}
+.mode-bar.live-mode{background:var(--emerald-bg);color:#059c5e;border-bottom:1px solid rgba(0,200,122,0.25);}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">🌍</div>
+      <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#fff;">TERRA-SENSE</div>
+    </div>
+    <div class="logo-tag">Terrain Intelligence Platform</div>
+  </div>
+
+  <div class="sidebar-sec">
+    <div class="sidebar-label">Monitor</div>
+    <div class="nav-item active" onclick="goTo('overview',this)"><span class="nav-icon">⬡</span>Overview</div>
+    <div class="nav-item" onclick="goTo('sensors',this)"><span class="nav-icon">📡</span>Sensors</div>
+    <div class="nav-item" onclick="goTo('models',this)"><span class="nav-icon">🧠</span>AI Models</div>
+  </div>
+
+  <div class="sidebar-sec">
+    <div class="sidebar-label">Intelligence</div>
+    <div class="nav-item" onclick="goTo('illegal',this)"><span class="nav-icon">🕵️</span>Illegal Mining<span class="nav-alert">1</span></div>
+    <div class="nav-item" onclick="goTo('braas',this)"><span class="nav-icon">🌱</span>BRaaS</div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="conn-pill live" id="connPill">
+      <div class="conn-dot"></div>
+      <span class="conn-text" id="connText">ESP32 Live</span>
+      <span class="conn-sub" id="connSub">Active</span>
+    </div>
+    <div class="clock-wrap" id="clock">--:--:--</div>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="main">
+
+  <!-- MODE BAR -->
+  <div class="mode-bar" id="modeBar"></div>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topTitle">Zone Overview</div>
+      <div class="topbar-sub" id="topSub">NH-39 Defense Corridor · Singrauli, MP</div>
+    </div>
+    <div class="topbar-right">
+      <div class="tb-badge live" id="liveBadge"><div class="tb-dot"></div><span id="liveText">Live Feed</span></div>
+      <div class="tb-badge secure">🔒 AES-128</div>
+      <div class="tb-avatar">TS</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+<!-- ══════════════════════════════════════
+     SCREEN 1 — OVERVIEW
+══════════════════════════════════════ -->
+<div class="screen active" id="screen-overview">
+
+  <!-- Alert Banner -->
+  <div class="alert critical" id="alertBanner">
+    <div class="alert-icon">🚨</div>
+    <div style="flex:1">
+      <div class="alert-title" id="alertTitle">Critical — Zone 1A Terrain Collapse Risk</div>
+      <div class="alert-msg" id="alertMsg">Loading live data...</div>
+    </div>
+    <div class="alert-time" id="alertTime">--:--:--<br>Singrauli</div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="g4 mb">
+    <div class="stat" style="--accent:var(--rose)">
+      <div class="stat-label">Current CAR</div>
+      <div class="stat-value" id="s-car" style="color:var(--rose)">---</div>
+      <div class="stat-unit">Carbon Absorption Rate</div>
+      <div class="stat-trend" id="s-car-trend" style="background:var(--rose-bg);color:var(--rose)">Loading...</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="sb-car" style="width:0%;background:var(--rose)"></div></div>
+    </div>
+    <div class="stat" style="--accent:var(--amber)">
+      <div class="stat-label">CO₂ Level</div>
+      <div class="stat-value" id="s-co2" style="color:var(--amber)">---</div>
+      <div class="stat-unit">Parts Per Million</div>
+      <div class="stat-trend" id="s-co2-trend" style="background:var(--amber-bg);color:#b45309">Loading...</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="sb-co2" style="width:0%;background:var(--amber)"></div></div>
+    </div>
+    <div class="stat" style="--accent:var(--sky)">
+      <div class="stat-label">Soil Moisture</div>
+      <div class="stat-value" id="s-moist" style="color:var(--sky)">---</div>
+      <div class="stat-unit">Percent (%)</div>
+      <div class="stat-trend" id="s-moist-trend" style="background:var(--sky-bg);color:#0369a1">Loading...</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="sb-moist" style="width:0%;background:var(--sky)"></div></div>
+    </div>
+    <div class="stat" style="--accent:var(--violet)">
+      <div class="stat-label">Temperature</div>
+      <div class="stat-value" id="s-temp" style="color:var(--violet)">---</div>
+      <div class="stat-unit">Celsius (°C)</div>
+      <div class="stat-trend" id="s-temp-trend" style="background:var(--violet-bg);color:#7c3aed">Loading...</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="sb-temp" style="width:0%;background:var(--violet)"></div></div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="g-main mb">
+
+    <!-- Left -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Zone List -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Zone Status</div><div class="card-sub">5 zones · NH-39 corridor</div></div>
+          <span class="pill red" id="alertCount">3 Alerts</span>
+        </div>
+        <div id="zoneList"></div>
+        <button class="sim-btn" id="simBtn" onclick="toggleSim()">▶ &nbsp;Start Simulation</button>
+      </div>
+
+      <!-- CAR Gauge -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">CAR Index</div><div class="card-sub" id="gaugeZone">Zone 1A</div></div>
+          <span id="gaugeRisk" class="pill red">Critical</span>
+        </div>
+        <div class="gauge-wrap">
+          <svg width="190" height="124" viewBox="0 0 190 124">
+            <path d="M 16 108 A 79 79 0 0 1 174 108" fill="none" stroke="#eaecf0" stroke-width="13" stroke-linecap="round"/>
+            <path d="M 16 108 A 79 79 0 0 1 174 108" fill="none" id="gaugeFill" stroke="#f43f5e" stroke-width="13" stroke-linecap="round" stroke-dasharray="248" stroke-dashoffset="199" style="transition:all 0.8s ease;"/>
+            <text x="95" y="94" id="gaugeVal" font-family="Syne,sans-serif" font-size="28" font-weight="800" fill="#f43f5e" text-anchor="middle" style="transition:all 0.5s;">---</text>
+            <text x="95" y="110" font-family="DM Sans,sans-serif" font-size="9" fill="#8a9aab" text-anchor="middle" letter-spacing="1">CAR VALUE</text>
+            <text x="10" y="122" font-family="DM Mono,monospace" font-size="8" fill="#bbc4ce">0.0</text>
+            <text x="87" y="18" font-family="DM Mono,monospace" font-size="8" fill="#bbc4ce">0.5</text>
+            <text x="172" y="122" font-family="DM Mono,monospace" font-size="8" fill="#bbc4ce">1.0</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Map -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Singrauli Corridor — Live Risk Map</div><div class="card-sub">24.12°N–24.18°N · 82.67°E–82.73°E · 5 sensor stakes · 500m spacing</div></div>
+          <span class="pill sky">NH-39</span>
+        </div>
+        <svg width="100%" viewBox="0 0 660 248" style="border-radius:9px;overflow:hidden;">
+          <rect width="660" height="248" fill="#f4f6f9" rx="7"/>
+          <defs><pattern id="g" width="38" height="38" patternUnits="userSpaceOnUse"><path d="M 38 0 L 0 0 0 38" fill="none" stroke="rgba(15,25,35,0.035)" stroke-width="1"/></pattern></defs>
+          <rect width="660" height="248" fill="url(#g)"/>
+          <path d="M 0 175 Q 165 160 330 165 Q 495 170 660 158 L 660 248 L 0 248 Z" fill="rgba(0,200,122,0.04)"/>
+          <path d="M 28 144 Q 192 132 348 126 Q 506 120 632 114" fill="none" stroke="#cbd5e1" stroke-width="17" stroke-linecap="round"/>
+          <path d="M 28 144 Q 192 132 348 126 Q 506 120 632 114" fill="none" stroke="white" stroke-width="13" stroke-linecap="round"/>
+          <path d="M 28 144 Q 192 132 348 126 Q 506 120 632 114" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-dasharray="10 6"/>
+          <text x="330" y="158" font-family="DM Sans,sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle" font-weight="600" letter-spacing="2">NH-39 DEFENSE CORRIDOR</text>
+          <ellipse cx="66" cy="207" rx="48" ry="20" fill="rgba(245,158,11,0.07)" stroke="rgba(245,158,11,0.28)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <ellipse cx="162" cy="214" rx="42" ry="19" fill="rgba(245,158,11,0.07)" stroke="rgba(245,158,11,0.28)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <text x="66" y="211" font-family="DM Sans,sans-serif" font-size="9" fill="#b45309" text-anchor="middle" font-weight="600">⛏ NCL</text>
+          <text x="162" y="218" font-family="DM Sans,sans-serif" font-size="9" fill="#b45309" text-anchor="middle" font-weight="600">⛏ NTPC</text>
+          <!-- Zone 1A -->
+          <circle cx="66" cy="144" r="34" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="2"/>
+          <circle cx="66" cy="144" r="34" fill="none" stroke="#f43f5e" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"><animateTransform attributeName="transform" type="rotate" from="0 66 144" to="360 66 144" dur="10s" repeatCount="indefinite"/></circle>
+          <circle cx="66" cy="144" r="5" fill="#f43f5e"/>
+          <!-- Zone 2B -->
+          <circle cx="192" cy="135" r="30" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5"/>
+          <circle cx="192" cy="135" r="5" fill="#f59e0b"/>
+          <!-- Zone 3C -->
+          <circle cx="318" cy="128" r="30" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5"/>
+          <circle cx="318" cy="128" r="5" fill="#f59e0b"/>
+          <!-- Zone 4D -->
+          <circle cx="444" cy="122" r="30" fill="rgba(0,200,122,0.08)" stroke="#00c87a" stroke-width="1.5"/>
+          <circle cx="444" cy="122" r="5" fill="#00c87a"/>
+          <!-- Zone 5E - LIVE -->
+          <circle cx="570" cy="116" r="30" fill="rgba(0,200,122,0.1)" stroke="#00c87a" stroke-width="2"/>
+          <circle cx="570" cy="116" r="5" fill="#00c87a"/>
+          <!-- Labels -->
+          <text x="66" y="134" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#f43f5e" text-anchor="middle">1A</text>
+          <text x="66" y="147" font-family="DM Mono,monospace" font-size="9" fill="#f43f5e" text-anchor="middle" id="map-1a">---</text>
+          <text x="192" y="125" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#f59e0b" text-anchor="middle">2B</text>
+          <text x="192" y="138" font-family="DM Mono,monospace" font-size="9" fill="#f59e0b" text-anchor="middle">0.413</text>
+          <text x="318" y="118" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#f59e0b" text-anchor="middle">3C</text>
+          <text x="318" y="131" font-family="DM Mono,monospace" font-size="9" fill="#f59e0b" text-anchor="middle">0.412</text>
+          <text x="444" y="112" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#059c5e" text-anchor="middle">4D</text>
+          <text x="444" y="125" font-family="DM Mono,monospace" font-size="9" fill="#059c5e" text-anchor="middle">0.587</text>
+          <text x="570" y="106" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#059c5e" text-anchor="middle">5E ●</text>
+          <text x="570" y="119" font-family="DM Mono,monospace" font-size="9" fill="#059c5e" text-anchor="middle" id="map-5e">LIVE</text>
+          <!-- Sensor stakes -->
+          <rect x="61" y="98" width="10" height="22" fill="#f43f5e" rx="2" opacity="0.65"/>
+          <rect x="187" y="92" width="10" height="20" fill="#f59e0b" rx="2" opacity="0.55"/>
+          <rect x="313" y="86" width="10" height="20" fill="#f59e0b" rx="2" opacity="0.55"/>
+          <rect x="439" y="80" width="10" height="20" fill="#00c87a" rx="2" opacity="0.55"/>
+          <rect x="565" y="74" width="10" height="20" fill="#00c87a" rx="2" opacity="0.7"/>
+          <!-- KM -->
+          <text x="38" y="240" font-family="DM Mono,monospace" font-size="8" fill="#94a3b8">KM 0</text>
+          <text x="158" y="240" font-family="DM Mono,monospace" font-size="8" fill="#94a3b8">KM 2</text>
+          <text x="284" y="240" font-family="DM Mono,monospace" font-size="8" fill="#94a3b8">KM 4</text>
+          <text x="410" y="240" font-family="DM Mono,monospace" font-size="8" fill="#94a3b8">KM 6</text>
+          <text x="536" y="240" font-family="DM Mono,monospace" font-size="8" fill="#94a3b8">KM 8</text>
+          <!-- Legend -->
+          <circle cx="16" cy="16" r="5" fill="rgba(244,63,94,0.2)" stroke="#f43f5e" stroke-width="1.5"/>
+          <text x="25" y="20" font-family="DM Sans,sans-serif" font-size="9" fill="#64748b" font-weight="500">Critical</text>
+          <circle cx="76" cy="16" r="5" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="85" y="20" font-family="DM Sans,sans-serif" font-size="9" fill="#64748b" font-weight="500">Warning</text>
+          <circle cx="136" cy="16" r="5" fill="rgba(0,200,122,0.2)" stroke="#00c87a" stroke-width="1.5"/>
+          <text x="145" y="20" font-family="DM Sans,sans-serif" font-size="9" fill="#64748b" font-weight="500">Stable</text>
+          <text x="196" y="20" font-family="DM Sans,sans-serif" font-size="9" fill="#059c5e" font-weight="700">● LIVE ESP32</text>
+        </svg>
+      </div>
+
+      <!-- Trend Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">CAR Trend — 6 Month History</div><div class="card-sub">Jan–Jun 2024 · All zones</div></div>
+        </div>
+        <div style="position:relative;height:180px;"><canvas id="trendChart"></canvas></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 2 — SENSORS
+══════════════════════════════════════ -->
+<div class="screen" id="screen-sensors">
+
+  <div class="sh">Live Sensor Readings</div>
+  <div class="sh-sub" id="sensorSub">Tactical Soil Stake — Zone 5E (ESP32 Live) · Singrauli Corridor</div>
+
+  <!-- 4 Gauges -->
+  <div class="g4 mb">
+
+    <div class="s-gauge-card">
+      <div class="card-title" style="text-align:left;margin-bottom:3px;">CO₂ Level</div>
+      <div class="card-sub" style="text-align:left;margin-bottom:14px;">MQ-135 Sensor</div>
+      <svg width="150" height="95" viewBox="0 0 150 95" style="margin:0 auto;display:block;">
+        <path d="M 11 83 A 64 64 0 0 1 139 83" fill="none" stroke="#eaecf0" stroke-width="11" stroke-linecap="round"/>
+        <path d="M 11 83 A 64 64 0 0 1 139 83" fill="none" stroke="#f59e0b" stroke-width="11" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="100" id="sg1" style="transition:stroke-dashoffset 0.8s ease;"/>
+        <text x="75" y="70" font-family="Syne,sans-serif" font-size="20" font-weight="800" fill="#f59e0b" text-anchor="middle" id="sv-co2">---</text>
+        <text x="75" y="83" font-family="DM Sans,sans-serif" font-size="8" fill="#8a9aab" text-anchor="middle">PPM</text>
+        <text x="7" y="93" font-family="DM Mono,monospace" font-size="7" fill="#bbc4ce">380</text>
+        <text x="132" y="93" font-family="DM Mono,monospace" font-size="7" fill="#bbc4ce">1200</text>
+      </svg>
+      <div id="co2-pill" class="pill amber" style="margin:8px auto 0;width:fit-content;">Loading...</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center;">Normal: 400–500 PPM</div>
+    </div>
+
+    <div class="s-gauge-card">
+      <div class="card-title" style="text-align:left;margin-bottom:3px;">Soil Moisture</div>
+      <div class="card-sub" style="text-align:left;margin-bottom:14px;">Capacitive Sensor</div>
+      <svg width="150" height="95" viewBox="0 0 150 95" style="margin:0 auto;display:block;">
+        <path d="M 11 83 A 64 64 0 0 1 139 83" fill="none" stroke="#eaecf0" stroke-width="11" stroke-linecap="round"/>
+        <path d="M 11 83 A 64 64 0 0 1 139 83" fill="none" stroke="#0ea5e9" stroke-width="11" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="165" id="sg2" style="transition:stroke-dashoffset 0.8s ease;"/>
+        <text x="75" y="70" font-family="Syne,sans-serif" font-size="20" font-weight="800" fill="#0ea5e9" text-anchor="middle" id="sv-moist">---</text>
+        <text x="75" y="83" font-family="DM Sans,sans-serif" font-size="8" fill="#8a9aab" text-anchor="middle">%</text>
+        <text x="7" y="93" font-family="DM Mono,monospace" font-size="7" fill="#bbc4ce">0</text>
+        <text x="132" y="93" font-family="DM Mono,monospace" font-size="7" fill="#bbc4ce">100</text>
+      </svg>
+      <div id="moist-pill" class="pill sky" style="margin:8px auto 0;width:fit-content;">Loading...</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center;">Healthy: 55–75%</div>
+    </div>
+
+    <div class="s-gauge-card">
+      <div class="card-title" style="text-align:left;margin-bottom:3px;">Temperature</div>
+      <div class="card-sub" style="text-align:left;margin-bottom:14px;">DHT22 Sensor</div>
+      <svg width="150" height="95" viewBox="0 0 150 95" style="margin:0 auto;display:block;">
+        <path d="M 11 83 A 64 64 0 0 1 139 83" fill="none" stroke="#eaecf0" stroke-width="11" stroke-linecap="round"/>
+        <path d="M 11 83 A 64 64 0 0 1 139 83" fill="none" stroke="#f43f5e" stroke-width="11" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="75" id="sg3" style="transition:stroke-dashoffset 0.8s ease;"/>
+        <text x="75" y="70" font-family="Syne,sans-serif" font-size="20" font-weight="800" fill="#f43f5e" text-anchor="middle" id="sv-temp">---</text>
+        <text x="75" y="83" font-family="DM Sans,sans-serif" font-size="8" fill="#8a9aab" text-anchor="middle">°C</text>
+        <text x="7" y="93" font-family="DM Mono,monospace" font-size="7" fill="#bbc4ce">0°</text>
+        <text x="132" y="93" font-family="DM Mono,monospace" font-size="7" fill="#bbc4ce">50°</text>
+      </svg>
+      <div id="temp-pill" class="pill amber" style="margin:8px auto 0;width:fit-content;">Loading...</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center;">Stress above: 38°C</div>
+    </div>
+
+    <div class="s-gauge-card">
+      <div class="card-title" style="text-align:left;margin-bottom:3px;">NDVI Index</div>
+      <div class="card-sub" style="text-align:left;margin-bottom:14px;">Satellite + Sensor</div>
+      <svg width="150" height="95" viewBox="0 0 150 95" style="margin:0 auto;display:block;">
+        <path d="M 11 83 A 64 64 0 0 1 139 83" fill="none" stroke="#eaecf0" stroke-width="11" stroke-linecap="round"/>
+        <path d="M 11 83 A 64 64 0 0 1 139 83" fill="none" stroke="#00c87a" stroke-width="11" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="177" id="sg4" style="transition:stroke-dashoffset 0.8s ease;"/>
+        <text x="75" y="70" font-family="Syne,sans-serif" font-size="20" font-weight="800" fill="#00c87a" text-anchor="middle" id="sv-ndvi">---</text>
+        <text x="75" y="83" font-family="DM Sans,sans-serif" font-size="8" fill="#8a9aab" text-anchor="middle">INDEX</text>
+        <text x="7" y="93" font-family="DM Mono,monospace" font-size="7" fill="#bbc4ce">0.0</text>
+        <text x="132" y="93" font-family="DM Mono,monospace" font-size="7" fill="#bbc4ce">1.0</text>
+      </svg>
+      <div id="ndvi-pill" class="pill green" style="margin:8px auto 0;width:fit-content;">Loading...</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center;">Healthy: 0.6–1.0</div>
+    </div>
+
+  </div>
+
+  <!-- CAR Result from Live Sensors -->
+  <div class="card mb" id="liveCARCard">
+    <div class="card-header">
+      <div>
+        <div class="card-title">🧠 Calculated CAR — Zone 5E (Live ESP32)</div>
+        <div class="card-sub">XGBoost model prediction from real sensor values</div>
+      </div>
+      <span id="liveCarPill" class="pill green">Calculating...</span>
+    </div>
+    <div class="g4">
+      <div>
+        <div class="stat-label">Predicted CAR</div>
+        <div class="stat-value" id="live-car" style="font-size:36px;color:var(--emerald);">---</div>
+        <div class="stat-unit">Carbon Absorption Rate</div>
+      </div>
+      <div>
+        <div class="stat-label">Risk Level</div>
+        <div id="live-risk" style="margin-top:8px;">---</div>
+      </div>
+      <div>
+        <div class="stat-label">Anomaly Flag</div>
+        <div id="live-anom" style="margin-top:8px;">---</div>
+      </div>
+      <div>
+        <div class="stat-label">Auto Recommendation</div>
+        <div id="live-rec" style="font-size:11px;color:var(--text2);margin-top:6px;line-height:1.6;">---</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:11px;color:var(--text3);">
+      Formula: CAR = (NDVI × 0.35) + (Moisture × 0.25) + (CO2_inverse × 0.25) + (Temp_stress × 0.15) &nbsp;·&nbsp;
+      <span id="lastUpdated">Waiting for data...</span>
+    </div>
+  </div>
+
+  <div class="g2 mb">
+
+    <!-- Vibration -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Vibration — SW-420</div><div class="card-sub">Ground movement detector</div></div>
+        <span id="vibPill" class="pill green">✓ Clear</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:18px;padding:8px 0;">
+        <div id="vibIcon" style="width:64px;height:64px;border-radius:50%;background:var(--emerald-bg);border:2px solid rgba(0,200,122,0.3);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">✅</div>
+        <div>
+          <div id="vibStatus" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--emerald);margin-bottom:6px;">No Activity</div>
+          <div class="strip">
+            <span class="strip-item" id="vib-val">Vibration: 0</span>
+            <span class="strip-item">Depth: 50cm</span>
+            <span class="strip-item">Filter: >3s = Mining</span>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.8;">
+        Duration &gt; 3 sec → Mining activity &nbsp;|&nbsp; Spike &lt; 3 sec → Vehicle ignored
+      </div>
+    </div>
+
+    <!-- Sensor Trend -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Sensor Trend</div><div class="card-sub">Live rolling window</div></div>
+      </div>
+      <div style="position:relative;height:160px;"><canvas id="sensorChart"></canvas></div>
+    </div>
+
+  </div>
+
+  <!-- Manual Predictor -->
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Manual CAR Predictor</div><div class="card-sub">Enter custom values — overrides live data</div></div>
+    </div>
+    <div class="g4">
+      <div class="field"><label>Soil Moisture (%)</label><input class="inp" type="number" id="i-moist" value="35" min="0" max="100"></div>
+      <div class="field"><label>CO₂ (PPM)</label><input class="inp" type="number" id="i-co2" value="500" min="380" max="1200"></div>
+      <div class="field"><label>Temperature (°C)</label><input class="inp" type="number" id="i-temp" value="30" min="0" max="50"></div>
+      <div class="field"><label>NDVI Index</label><input class="inp" type="number" id="i-ndvi" value="0.4" min="0" max="1" step="0.01"></div>
+    </div>
+    <button class="btn btn-primary" onclick="predictCAR()">🔍 &nbsp;Predict CAR Now</button>
+    <div id="predResult" style="display:none;margin-top:14px;padding:14px;background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);">
+      <div class="g4">
+        <div><div class="stat-label">Predicted CAR</div><div class="stat-value" id="r-car" style="font-size:26px;"></div></div>
+        <div><div class="stat-label">Risk Level</div><div id="r-risk" style="margin-top:8px;"></div></div>
+        <div><div class="stat-label">Anomaly</div><div id="r-anom" style="margin-top:8px;"></div></div>
+        <div><div class="stat-label">Action</div><div id="r-action" style="font-size:11px;color:var(--text2);margin-top:6px;line-height:1.5;"></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 3 — AI MODELS
+══════════════════════════════════════ -->
+<div class="screen" id="screen-models">
+  <div class="sh">AI Pipeline</div>
+  <div class="sh-sub">Three-model architecture — XGBoost · LSTM · Isolation Forest</div>
+  <div class="g3 mb">
+    <div class="model-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="model-name">XGBoost Regressor</div><div class="model-role">Current CAR Estimator</div></div>
+        <div style="text-align:right;"><div class="model-acc" style="color:var(--emerald);">96%</div><div class="model-metric">R² Score</div></div>
+      </div>
+      <div class="prog" style="margin:10px 0 3px;"><div class="prog-bar" style="width:96%;background:var(--emerald);"></div></div>
+      <div class="model-desc">Builds 200 sequential decision trees. Each corrects errors of previous. Estimates current CAR from 8 live sensor features in milliseconds.</div>
+      <div class="strip"><span class="strip-item">200 trees</span><span class="strip-item">depth:6</span><span class="strip-item">lr:0.05</span><span class="strip-item">RMSE:0.042</span></div>
+    </div>
+    <div class="model-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="model-name">LSTM Forecaster</div><div class="model-role">6–24 Hour Predictor</div></div>
+        <div style="text-align:right;"><div class="model-acc" style="color:var(--sky);">94%</div><div class="model-metric">Accuracy</div></div>
+      </div>
+      <div class="prog" style="margin:10px 0 3px;"><div class="prog-bar" style="width:94%;background:var(--sky);"></div></div>
+      <div class="model-desc">Long Short-Term Memory network with forget, input, output gates. Remembers 48 hours of CAR history to predict terrain failure 6–24 hours ahead.</div>
+      <div class="strip"><span class="strip-item">64 cells</span><span class="strip-item">2 layers</span><span class="strip-item">dropout:0.2</span><span class="strip-item">loss:0.0038</span></div>
+    </div>
+    <div class="model-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="model-name">Isolation Forest</div><div class="model-role">Anomaly Detector</div></div>
+        <div style="text-align:right;"><div class="model-acc" style="color:var(--rose);">96%</div><div class="model-metric">Detection</div></div>
+      </div>
+      <div class="prog" style="margin:10px 0 3px;"><div class="prog-bar" style="width:97%;background:var(--rose);"></div></div>
+      <div class="model-desc">Learns normal patterns during training. Anomalies need very few splits to isolate — they are far from normal. Catches blasts, sinkholes, illegal mining.</div>
+      <div class="strip"><span class="strip-item">100 trees</span><span class="strip-item">contam:5%</span><span class="strip-item">rate:4.97%</span></div>
+    </div>
+  </div>
+  <div class="g2 mb">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">LSTM 12-Hour Forecast</div><div class="card-sub">Zone 1A predicted trajectory</div></div><span class="pill red">Critical in ~9h</span></div>
+      <div style="position:relative;height:190px;"><canvas id="lstmChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Feature Importance</div><div class="card-sub">XGBoost contribution weights</div></div></div>
+      <div style="position:relative;height:190px;"><canvas id="featureChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">CAR Formula</div><div class="card-sub">Weighted multi-sensor scoring</div></div></div>
+    <div class="g2">
+      <div style="background:var(--surface);border-radius:7px;padding:16px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);line-height:2.4;">
+        <span style="color:var(--text);font-weight:600;">CAR</span> = (NDVI × <span style="color:var(--emerald);font-weight:600;">0.35</span>)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Moisture_norm × <span style="color:var(--sky);font-weight:600;">0.25</span>)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (CO2_inverse × <span style="color:var(--amber);font-weight:600;">0.25</span>)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Temp_stress × <span style="color:var(--rose);font-weight:600;">0.15</span>)
+      </div>
+      <div>
+        <div class="info-row"><span class="info-key">NDVI × 0.35</span><span class="info-val" style="color:var(--emerald);font-family:'DM Sans',sans-serif;">Vegetation health — 35%</span></div>
+        <div class="info-row"><span class="info-key">Moisture × 0.25</span><span class="info-val" style="color:var(--sky);font-family:'DM Sans',sans-serif;">Water retention — 25%</span></div>
+        <div class="info-row"><span class="info-key">CO2 inverse × 0.25</span><span class="info-val" style="color:var(--amber);font-family:'DM Sans',sans-serif;">Biological activity — 25%</span></div>
+        <div class="info-row"><span class="info-key">Temp stress × 0.15</span><span class="info-val" style="color:var(--rose);font-family:'DM Sans',sans-serif;">Thermal stress — 15%</span></div>
+        <div class="info-row"><span class="info-key">Vibration (SW-420)</span><span class="info-val" style="color:var(--text3);font-family:'DM Sans',sans-serif;">Illegal mining only — not in CAR</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 4 — ILLEGAL MINING
+══════════════════════════════════════ -->
+<div class="screen" id="screen-illegal">
+  <div class="sh">Illegal Mining Detection</div>
+  <div class="sh-sub">Cross-referencing anomalies with encrypted legal mine database</div>
+  <div class="g2 mb">
+    <div class="card" style="border-color:rgba(244,63,94,0.25);">
+      <div class="card-header"><div><div class="card-title">Active Detection — Zone 1A</div><div class="card-sub">As of 03:14:22 today</div></div><span class="pill red">🚨 Alert</span></div>
+      <div style="text-align:center;padding:14px 0 20px;">
+        <div style="font-size:44px;margin-bottom:10px;">🕵️</div>
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Illegal Mining Suspected</div>
+        <div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--rose);line-height:1;">87%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;font-weight:500;">Confidence Score</div>
+      </div>
+      <div class="divider"></div>
+      <div class="info-row"><span class="info-key">CAR Drop</span><span class="info-val" style="color:var(--rose);">0.469 in 24 hours</span></div>
+      <div class="info-row"><span class="info-key">Vibration At</span><span class="info-val" style="color:var(--rose);">03:14 AM — Night</span></div>
+      <div class="info-row"><span class="info-key">Est. Distance</span><span class="info-val">500m – 1km NE</span></div>
+      <div class="info-row"><span class="info-key">Nearest Legal Mine</span><span class="info-val">NCL Jhingurda 4.2km</span></div>
+      <div class="info-row"><span class="info-key">Outside Boundary</span><span class="info-val" style="color:var(--rose);">Yes — 2.7km beyond</span></div>
+      <div class="info-row"><span class="info-key">HQ Alert</span><span class="info-val" style="color:var(--emerald);">✓ Sent</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Confidence Breakdown</div></div></div>
+        <div class="conf-item"><div class="conf-header"><span class="conf-label">CAR drop &gt; 0.3 in 24h</span><span class="conf-val" style="color:var(--rose);">+40 pts</span></div><div class="prog"><div class="prog-bar" style="width:40%;background:var(--rose);"></div></div></div>
+        <div class="conf-item"><div class="conf-header"><span class="conf-label">Vibration detected</span><span class="conf-val" style="color:var(--amber);">+35 pts</span></div><div class="prog"><div class="prog-bar" style="width:35%;background:var(--amber);"></div></div></div>
+        <div class="conf-item"><div class="conf-header"><span class="conf-label">Night hours (3AM)</span><span class="conf-val" style="color:var(--violet);">+12 pts</span></div><div class="prog"><div class="prog-bar" style="width:12%;background:var(--violet);"></div></div></div>
+        <div style="margin-top:12px;padding:10px;background:var(--rose-bg);border-radius:7px;text-align:center;">
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--rose);">87% Confidence</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">30%=investigate · 60%=alert · 80%=defense alert</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Legal Mines Database</div><div class="card-sub">AES-256 encrypted · Secret level</div></div><span class="pill grey">⬛ Classified</span></div>
+        <table class="t">
+          <thead><tr><th>Mine</th><th>Operator</th><th>Radius</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600;color:var(--text);">NTPC Vindhyachal</td><td>NTPC Ltd</td><td>2.0 km</td><td><span class="pill green" style="font-size:10px;">Active</span></td></tr>
+            <tr><td style="font-weight:600;color:var(--text);">NCL Jhingurda</td><td>NCL</td><td>1.5 km</td><td><span class="pill green" style="font-size:10px;">Active</span></td></tr>
+            <tr><td style="font-weight:600;color:var(--text);">NCL Amlohri</td><td>NCL</td><td>1.8 km</td><td><span class="pill green" style="font-size:10px;">Active</span></td></tr>
+            <tr><td style="font-weight:600;color:var(--text);">Reliance Moher</td><td>Reliance</td><td>1.2 km</td><td><span class="pill green" style="font-size:10px;">Active</span></td></tr>
+            <tr><td colspan="4" style="text-align:center;"><span class="pill red" style="font-size:10px;">⚠ Alert: outside all legal boundaries</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Alert History</div><div class="card-sub">All zones · Recent events</div></div></div>
+    <table class="t">
+      <thead><tr><th>Time</th><th>Zone</th><th>CAR</th><th>Risk</th><th>Type</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:'DM Mono',monospace;font-size:11px;">03:14:22</td><td style="font-weight:600;">Zone 1A</td><td style="font-family:'DM Mono',monospace;color:var(--rose);">0.187</td><td><span class="pill red" style="font-size:10px;">Critical</span></td><td>Illegal Mining</td><td><span class="pill green" style="font-size:10px;">✓ HQ Notified</span></td></tr>
+        <tr><td style="font-family:'DM Mono',monospace;font-size:11px;">02:44:11</td><td style="font-weight:600;">Zone 1A</td><td style="font-family:'DM Mono',monospace;color:var(--rose);">0.201</td><td><span class="pill red" style="font-size:10px;">Critical</span></td><td>CAR Drop</td><td><span class="pill green" style="font-size:10px;">✓ Convoy Rerouted</span></td></tr>
+        <tr><td style="font-family:'DM Mono',monospace;font-size:11px;">01:12:55</td><td style="font-weight:600;">Zone 2B</td><td style="font-family:'DM Mono',monospace;color:var(--amber);">0.398</td><td><span class="pill amber" style="font-size:10px;">Warning</span></td><td>CAR Drop</td><td><span class="pill amber" style="font-size:10px;">Monitoring</span></td></tr>
+        <tr><td style="font-family:'DM Mono',monospace;font-size:11px;">00:30:08</td><td style="font-weight:600;">Zone 1A</td><td style="font-family:'DM Mono',monospace;color:var(--rose);">0.219</td><td><span class="pill red" style="font-size:10px;">Critical</span></td><td>Vibration</td><td><span class="pill green" style="font-size:10px;">✓ Team Deployed</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 5 — BRAAS
+══════════════════════════════════════ -->
+<div class="screen" id="screen-braas">
+  <div class="sh">BRaaS — Biological Remediation as a Service</div>
+  <div class="sh-sub">Auto-generated remediation plan · Zone 1A · CAR: 0.196 Critical</div>
+  <div class="card mb">
+    <div class="card-header"><div><div class="card-title">All Zones — CAR Comparison</div></div></div>
+    <div style="position:relative;height:150px;"><canvas id="zoneChart"></canvas></div>
+  </div>
+  <div class="g2 mb">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:11px;">Auto-generated Recommendations</div>
+      <div class="rec"><div class="rec-icon">🚨</div><div><span class="rec-phase" style="background:var(--rose-bg);color:var(--rose);">Immediate</span><div class="rec-text">Reroute defense convoys away from Zone 1A</div><div class="rec-sub">NH-75 via Waidhan · +23 min · All alternate zones stable</div></div></div>
+      <div class="rec"><div class="rec-icon">🪖</div><div><span class="rec-phase" style="background:var(--rose-bg);color:var(--rose);">Immediate</span><div class="rec-text">Deploy military MLC steel road plates</div><div class="rec-sub">30 min deployment · Standard army inventory</div></div></div>
+      <div class="rec"><div class="rec-icon">🕳️</div><div><span class="rec-phase" style="background:var(--amber-bg);color:#b45309;">Short Term</span><div class="rec-text">Backfill subsurface cavities with fly ash</div><div class="rec-sub">1–4 weeks · NCL fly ash available locally</div></div></div>
+      <div class="rec"><div class="rec-icon">🌊</div><div><span class="rec-phase" style="background:var(--amber-bg);color:#b45309;">Short Term</span><div class="rec-text">Install geo-drainage channels</div><div class="rec-sub">2–3 weeks · Restore moisture retention</div></div></div>
+      <div class="rec"><div class="rec-icon">🌱</div><div><span class="rec-phase" style="background:var(--emerald-bg);color:#059c5e;">Long Term</span><div class="rec-text">Plant Vetiver grass across 2.3 km²</div><div class="rec-sub">Chrysopogon zizanioides · 4m roots · 90-day restoration</div></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Recovery Timeline</div><div class="card-sub">Zone 1A · Post BRaaS</div></div></div>
+        <div class="tl">
+          <div class="tl-item"><div class="tl-dot" style="border-color:var(--rose);"></div><div class="tl-phase" style="color:var(--rose);">0 – 24 Hours</div><div class="tl-title">Emergency Response</div><div class="tl-desc">Convoy rerouted. Steel plates deployed. HQ alerted.</div></div>
+          <div class="tl-item"><div class="tl-dot" style="border-color:var(--amber);"></div><div class="tl-phase" style="color:var(--amber);">1 – 4 Weeks</div><div class="tl-title">Structural Stabilization</div><div class="tl-desc">Cavities backfilled. Drainage installed. No further sinking.</div></div>
+          <div class="tl-item"><div class="tl-dot" style="border-color:var(--sky);"></div><div class="tl-phase" style="color:var(--sky);">1 – 3 Months</div><div class="tl-title">Biological Restoration</div><div class="tl-desc">Vetiver planted. 4m roots bind soil. Microorganisms recover.</div></div>
+          <div class="tl-item"><div class="tl-dot" style="border-color:var(--emerald);"></div><div class="tl-phase" style="color:var(--emerald);">3 – 6 Months</div><div class="tl-title">Full Recovery</div><div class="tl-desc">CAR rises above 0.55. Convoy route re-opened.</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Predicted CAR Recovery</div></div></div>
+        <div style="position:relative;height:130px;"><canvas id="recoveryChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Vetiver Grass — The Biological Solution</div><div class="card-sub">Chrysopogon zizanioides</div></div></div>
+    <div class="g3">
+      <div style="text-align:center;padding:18px;background:var(--emerald-bg);border-radius:var(--radius-sm);"><div style="font-size:32px;margin-bottom:8px;">🌾</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#059c5e;">4 Meters</div><div style="font-size:11px;color:var(--text3);margin-top:3px;line-height:1.6;">Root depth · Physically stitches soil · Living rebar underground</div></div>
+      <div style="text-align:center;padding:18px;background:var(--sky-bg);border-radius:var(--radius-sm);"><div style="font-size:32px;margin-bottom:8px;">🧬</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#0369a1;">Restores CAR</div><div style="font-size:11px;color:var(--text3);margin-top:3px;line-height:1.6;">Revives microorganism colonies · Biological carbon cycle restored</div></div>
+      <div style="text-align:center;padding:18px;background:var(--amber-bg);border-radius:var(--radius-sm);"><div style="font-size:32px;margin-bottom:8px;">📈</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#b45309;">90 Days</div><div style="font-size:11px;color:var(--text3);margin-top:3px;line-height:1.6;">CAR 0.196 → 0.55+ · Permanent biological fix</div></div>
+    </div>
+  </div>
+</div>
+
+  </div><!-- end content -->
+</div><!-- end main -->
+</div><!-- end layout -->
+
+<script>
+// ══════════════════════════════════════
+// DATA & STATE
+// ══════════════════════════════════════
+const BACKEND = 'http://localhost:8000/sensor';
+const FETCH_INTERVAL = 5000; // 5 seconds
+let isLive = false;
+let liveData = null;
+let sensorHistory = {co2:[], moisture:[], temp:[], ndvi:[], labels:[]};
+let charts = {};
+
+// Dataset fallback values (from singrauli_sensor_data.csv)
+const DATASET = [
+  {co2:552,moisture:34.5,temp:29.2,ndvi:0.180,humidity:53.5,vibration:0,CAR:0.396,risk:'WARNING',zone:'Zone_5E'},
+  {co2:578,moisture:32.1,temp:30.1,ndvi:0.165,humidity:51.2,vibration:0,CAR:0.381,risk:'WARNING',zone:'Zone_5E'},
+  {co2:604,moisture:30.8,temp:30.9,ndvi:0.155,humidity:49.8,vibration:0,CAR:0.362,risk:'WARNING',zone:'Zone_5E'},
+  {co2:631,moisture:29.4,temp:31.5,ndvi:0.148,humidity:48.1,vibration:1,CAR:0.341,risk:'WARNING',zone:'Zone_5E'},
+  {co2:589,moisture:33.2,temp:29.7,ndvi:0.172,humidity:52.0,vibration:0,CAR:0.374,risk:'WARNING',zone:'Zone_5E'},
+  {co2:543,moisture:35.9,temp:28.8,ndvi:0.188,humidity:54.8,vibration:0,CAR:0.401,risk:'WARNING',zone:'Zone_5E'},
+  {co2:521,moisture:37.4,temp:28.2,ndvi:0.195,humidity:56.2,vibration:0,CAR:0.418,risk:'WATCH',  zone:'Zone_5E'},
+  {co2:498,moisture:39.1,temp:27.9,ndvi:0.201,humidity:57.5,vibration:0,CAR:0.432,risk:'WATCH',  zone:'Zone_5E'},
+];
+let datasetIdx = 0;
+
+const zones = [
+  {id:'Zone 1A',car:0.196,risk:'Critical', color:'#f43f5e',pill:'red'},
+  {id:'Zone 2B',car:0.413,risk:'Warning',  color:'#f59e0b',pill:'amber'},
+  {id:'Zone 3C',car:0.412,risk:'Warning',  color:'#f59e0b',pill:'amber'},
+  {id:'Zone 4D',car:0.587,risk:'Watch',    color:'#0ea5e9',pill:'sky'},
+  {id:'Zone 5E',car:0.396,risk:'Warning',  color:'#f59e0b',pill:'amber'},
+];
+
+// ══════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════
+function tick(){
+  const t = new Date().toLocaleTimeString('en-IN',{hour12:false});
+  document.getElementById('clock').textContent = t;
+  const at = document.getElementById('alertTime');
+  if(at) at.innerHTML = t+'<br>Singrauli';
+}
+setInterval(tick,1000); tick();
+
+// ══════════════════════════════════════
+// NAV
+// ══════════════════════════════════════
+const titles = {
+  overview:['Zone Overview','NH-39 Defense Corridor · Singrauli, MP'],
+  sensors: ['Live Sensors','Tactical Soil Stake · Zone 5E (ESP32)'],
+  models:  ['AI Pipeline','XGBoost · LSTM · Isolation Forest'],
+  illegal: ['Illegal Mining','Detection & Classification Module'],
+  braas:   ['BRaaS','Biological Remediation as a Service'],
+};
+function goTo(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('topTitle').textContent = titles[id][0];
+  document.getElementById('topSub').textContent   = titles[id][1];
+  setTimeout(()=>initCharts(id),50);
+}
+
+// ══════════════════════════════════════
+// ZONE LIST
+// ══════════════════════════════════════
+function renderZones(){
+  document.getElementById('zoneList').innerHTML = zones.map((z,i)=>`
+    <div class="zone-row ${i===0?'active':''}" onclick="selectZone(${i})">
+      <div class="zone-color" style="background:${z.color}"></div>
+      <div>
+        <div class="zone-id">${z.id}${i===4?' <span style="color:#059c5e;font-size:9px;">● LIVE</span>':''}</div>
+        <div class="zone-car" id="zc-${i}">CAR: ${z.car.toFixed(3)}</div>
+      </div>
+      <span class="zone-badge pill ${z.pill}" style="font-size:10px;">${z.risk}</span>
+    </div>
+  `).join('');
+}
+renderZones();
+
+function selectZone(idx){
+  document.querySelectorAll('.zone-row').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  const z = zones[idx];
+  const fill = document.getElementById('gaugeFill');
+  const color = z.color;
+  fill.style.strokeDashoffset = 248-(z.car*248);
+  fill.setAttribute('stroke',color);
+  document.getElementById('gaugeVal').textContent = z.car.toFixed(3);
+  document.getElementById('gaugeVal').setAttribute('fill',color);
+  document.getElementById('gaugeZone').textContent = z.id+(idx===4?' · Live ESP32':'');
+  const rr = document.getElementById('gaugeRisk');
+  rr.textContent = z.risk;
+  rr.className = 'pill '+z.pill;
+  updateAlert(z.car, z.risk, z.id);
+}
+
+// ══════════════════════════════════════
+// ALERT BANNER
+// ══════════════════════════════════════
+function updateAlert(car, risk, zone){
+  const banner = document.getElementById('alertBanner');
+  const title  = document.getElementById('alertTitle');
+  const msg    = document.getElementById('alertMsg');
+  if(risk==='Critical'||risk==='CRITICAL'){
+    banner.className='alert critical';
+    title.textContent='Critical — '+zone+' Terrain Collapse Risk';
+    msg.innerHTML='CAR = <strong>'+car.toFixed(3)+'</strong> — below critical threshold (0.25) · Illegal mining suspected · Reroute convoy via NH-75 · BRaaS initiated';
+  } else if(risk==='Warning'||risk==='WARNING'){
+    banner.className='alert warning';
+    title.textContent='Warning — '+zone+' Needs Attention';
+    msg.innerHTML='CAR = <strong>'+car.toFixed(3)+'</strong> · Plant Vetiver. Improve drainage. Backfill cavities.';
+  } else {
+    banner.className='alert stable';
+    title.textContent='Stable — '+zone+' All Clear';
+    msg.innerHTML='CAR = <strong>'+car.toFixed(3)+'</strong> · No action required · Continue monitoring';
+  }
+}
+
+// ══════════════════════════════════════
+// CALCULATE CAR FROM SENSORS
+// ══════════════════════════════════════
+function calcCAR(co2, moisture, temp, ndvi){
+  const ndviN   = Math.max(0,Math.min(1,ndvi));
+  const moistN  = Math.max(0,Math.min(1,moisture/100));
+  const co2Inv  = Math.max(0,1-((co2-380)/820));
+  const tempS   = Math.max(0,1-(Math.abs(temp-25)/25));
+  return Math.min(1,Math.max(0,(ndviN*0.35)+(moistN*0.25)+(co2Inv*0.25)+(tempS*0.15)));
+}
+
+function getRisk(car){
+  return car>=0.65?'Stable':car>=0.40?'Watch':car>=0.25?'Warning':'Critical';
+}
+function getRiskColor(risk){
+  return {Stable:'#00c87a',STABLE:'#00c87a',Watch:'#0ea5e9',WATCH:'#0ea5e9',Warning:'#f59e0b',WARNING:'#f59e0b',Critical:'#f43f5e',CRITICAL:'#f43f5e'}[risk]||'#f59e0b';
+}
+function getRiskPill(risk){
+  return {Stable:'green',STABLE:'green',Watch:'sky',WATCH:'sky',Warning:'amber',WARNING:'amber',Critical:'red',CRITICAL:'red'}[risk]||'amber';
+}
+
+// ══════════════════════════════════════
+// UPDATE UI WITH SENSOR DATA
+// ══════════════════════════════════════
+function updateUI(s, CAR, risk, zone, fromLive){
+  const riskColor = getRiskColor(risk);
+  const riskPill  = getRiskPill(risk);
+
+  // Stat cards
+  document.getElementById('s-car').textContent   = CAR.toFixed(3);
+  document.getElementById('s-car').style.color   = riskColor;
+  document.getElementById('s-co2').textContent   = s.co2_ppm.toFixed(0);
+  document.getElementById('s-moist').textContent = s.soil_moisture.toFixed(1);
+  document.getElementById('s-temp').textContent  = s.temperature.toFixed(1);
+
+  // Stat bars
+  document.getElementById('sb-car').style.width  = (CAR*100)+'%';
+  document.getElementById('sb-car').style.background = riskColor;
+  document.getElementById('sb-co2').style.width  = (((s.co2_ppm-380)/820)*100)+'%';
+  document.getElementById('sb-moist').style.width= s.soil_moisture+'%';
+  document.getElementById('sb-temp').style.width = ((s.temperature/50)*100)+'%';
+
+  // Trends
+  document.getElementById('s-car-trend').textContent   = risk;
+  document.getElementById('s-car-trend').style.background = riskColor+'22';
+  document.getElementById('s-car-trend').style.color      = riskColor;
+  document.getElementById('s-co2-trend').textContent   = s.co2_ppm>700?'↑ High':'→ Normal';
+  document.getElementById('s-moist-trend').textContent = s.soil_moisture<25?'↓ Critical':s.soil_moisture<50?'↓ Low':'✓ OK';
+  document.getElementById('s-temp-trend').textContent  = s.temperature>38?'↑ Hot':'→ Normal';
+
+  // Sensor screen gauges
+  document.getElementById('sv-co2').textContent   = s.co2_ppm.toFixed(0);
+  document.getElementById('sv-moist').textContent = s.soil_moisture.toFixed(1);
+  document.getElementById('sv-temp').textContent  = s.temperature.toFixed(1);
+  document.getElementById('sv-ndvi').textContent  = (s.ndvi||0).toFixed(2);
+
+  const co2Pct   = Math.min(1,(s.co2_ppm-380)/820);
+  const moistPct = Math.min(1,s.soil_moisture/100);
+  const tempPct  = Math.min(1,s.temperature/50);
+  const ndviPct  = Math.min(1,s.ndvi||0);
+
+  document.getElementById('sg1').style.strokeDashoffset = 201-(co2Pct*201);
+  document.getElementById('sg2').style.strokeDashoffset = 201-(moistPct*201);
+  document.getElementById('sg3').style.strokeDashoffset = 201-(tempPct*201);
+  document.getElementById('sg4').style.strokeDashoffset = 201-(ndviPct*201);
+
+  // Sensor pills
+  const co2pil = s.co2_ppm>700?['red','⚠ High']:s.co2_ppm>500?['amber','↑ Elevated']:['green','✓ Normal'];
+  document.getElementById('co2-pill').className   = 'pill '+co2pil[0];
+  document.getElementById('co2-pill').textContent = co2pil[1];
+
+  const moistpil = s.soil_moisture<25?['red','🔴 Critical']:s.soil_moisture<50?['amber','⚠ Low']:['green','✓ OK'];
+  document.getElementById('moist-pill').className   = 'pill '+moistpil[0];
+  document.getElementById('moist-pill').textContent = moistpil[1];
+
+  const temppil = s.temperature>38?['red','⚠ Hot']:s.temperature>32?['amber','⚠ Warm']:['green','✓ Normal'];
+  document.getElementById('temp-pill').className   = 'pill '+temppil[0];
+  document.getElementById('temp-pill').textContent = temppil[1];
+
+  const ndvipil = (s.ndvi||0)<0.2?['red','🔴 Barren']:(s.ndvi||0)<0.5?['amber','⚠ Low']:['green','✓ Healthy'];
+  document.getElementById('ndvi-pill').className   = 'pill '+ndvipil[0];
+  document.getElementById('ndvi-pill').textContent = ndvipil[1];
+
+  // CAR main gauge (Zone 5E live)
+  const fill = document.getElementById('gaugeFill');
+  fill.style.strokeDashoffset = 248-(CAR*248);
+  fill.setAttribute('stroke', riskColor);
+  document.getElementById('gaugeVal').textContent = CAR.toFixed(3);
+  document.getElementById('gaugeVal').setAttribute('fill',riskColor);
+  document.getElementById('gaugeZone').textContent = 'Zone 5E · Live ESP32';
+  const gr = document.getElementById('gaugeRisk');
+  gr.textContent = getRisk(CAR);
+  gr.className   = 'pill '+riskPill;
+
+  // Zone 5E in list
+  zones[4].car  = CAR;
+  zones[4].risk = getRisk(CAR);
+  zones[4].color= riskColor;
+  zones[4].pill = riskPill;
+  const zc4 = document.getElementById('zc-4');
+  if(zc4) zc4.textContent = 'CAR: '+CAR.toFixed(3);
+
+  // Map Zone 5E label
+  const m5e = document.getElementById('map-5e');
+  if(m5e) m5e.textContent = CAR.toFixed(3);
+  const m1a = document.getElementById('map-1a');
+  if(m1a) m1a.textContent = zones[0].car.toFixed(3);
+
+  // Alert banner
+  updateAlert(CAR, getRisk(CAR), zone||'Zone 5E');
+
+  // Live CAR card
+  const recs = {
+    Critical:'IMMEDIATE: Reroute convoys. Steel plates. Emergency BRaaS.',
+    Warning: 'Plant Vetiver. Improve drainage. Backfill cavities.',
+    Watch:   'Monitor closely. Plan afforestation.',
+    Stable:  'No action needed. Continue monitoring.'
+  };
+  const carRisk = getRisk(CAR);
+  document.getElementById('live-car').textContent  = CAR.toFixed(3);
+  document.getElementById('live-car').style.color  = riskColor;
+  document.getElementById('liveCarPill').textContent = carRisk;
+  document.getElementById('liveCarPill').className   = 'pill '+riskPill;
+  document.getElementById('live-risk').innerHTML    = `<span class="pill ${riskPill}">${carRisk}</span>`;
+  document.getElementById('live-anom').innerHTML    = s.co2_ppm>700&&CAR<0.25?`<span class="pill red">⚠ Anomaly Detected</span>`:`<span class="pill green">✓ Normal</span>`;
+  document.getElementById('live-rec').textContent   = recs[carRisk]||'Monitor zone.';
+  document.getElementById('live-rec').style.color   = riskColor;
+  document.getElementById('lastUpdated').textContent= fromLive?'Live ESP32 · '+new Date().toLocaleTimeString():'Dataset fallback · '+new Date().toLocaleTimeString();
+
+  // Vibration
+  const vib = s.vibration||0;
+  const vibPill  = document.getElementById('vibPill');
+  const vibIcon  = document.getElementById('vibIcon');
+  const vibStat  = document.getElementById('vibStatus');
+  const vibVal   = document.getElementById('vib-val');
+  vibVal.textContent = 'Vibration: '+vib;
+  if(vib>0){
+    vibPill.className='pill red'; vibPill.textContent='⚡ Detected';
+    vibIcon.style.background='var(--rose-bg)'; vibIcon.style.borderColor='rgba(244,63,94,0.3)'; vibIcon.textContent='📳';
+    vibStat.style.color='var(--rose)'; vibStat.textContent='Mining Activity Detected';
+  } else {
+    vibPill.className='pill green'; vibPill.textContent='✓ Clear';
+    vibIcon.style.background='var(--emerald-bg)'; vibIcon.style.borderColor='rgba(0,200,122,0.3)'; vibIcon.textContent='✅';
+    vibStat.style.color='var(--emerald)'; vibStat.textContent='No Activity';
+  }
+
+  // Push to history for chart
+  const now = new Date().toLocaleTimeString('en-IN',{hour12:false,second:'2-digit'}).slice(0,5);
+  sensorHistory.co2.push(s.co2_ppm);
+  sensorHistory.moisture.push(s.soil_moisture);
+  sensorHistory.temp.push(s.temperature);
+  sensorHistory.ndvi.push((s.ndvi||0)*10);
+  sensorHistory.labels.push(now);
+  if(sensorHistory.co2.length>20){
+    ['co2','moisture','temp','ndvi','labels'].forEach(k=>sensorHistory[k].shift());
+  }
+  if(charts.sensor){
+    charts.sensor.data.labels = sensorHistory.labels;
+    charts.sensor.data.datasets[0].data = sensorHistory.co2.map(v=>(v-380)/8.2);
+    charts.sensor.data.datasets[1].data = sensorHistory.moisture;
+    charts.sensor.data.datasets[2].data = sensorHistory.ndvi;
+    charts.sensor.update('none');
+  }
+}
+
+// ══════════════════════════════════════
+// FETCH LIVE DATA
+// ══════════════════════════════════════
+async function fetchLiveData(){
+  try{
+    const res  = await fetch(BACKEND, {signal: AbortSignal.timeout(3000)});
+    const data = await res.json();
+    const s    = data.sensors;
+    const CAR  = data.CAR || calcCAR(s.co2_ppm, s.soil_moisture, s.temperature, s.ndvi||0.15);
+    const risk = data.risk || getRisk(CAR);
+
+    liveData = data;
+    updateUI(s, CAR, risk, data.zone||'Zone 5E', true);
+
+    // Update connection status
+    if(!isLive){
+      isLive = true;
+      setLiveMode(true);
+    }
+
+  } catch(err){
+    // Backend offline — use dataset
+    if(isLive){
+      isLive = false;
+      setLiveMode(false);
+    }
+    useDataset();
+  }
+}
+
+function useDataset(){
+  const d = DATASET[datasetIdx % DATASET.length];
+  datasetIdx++;
+  const s = {
+    co2_ppm:d.co2, soil_moisture:d.moisture,
+    temperature:d.temp, ndvi:d.ndvi,
+    humidity:d.humidity, vibration:d.vibration
+  };
+  const CAR  = calcCAR(s.co2_ppm, s.soil_moisture, s.temperature, s.ndvi);
+  const risk = getRisk(CAR);
+  updateUI(s, CAR, risk, 'Zone 5E (Dataset)', false);
+}
+
+// ══════════════════════════════════════
+// CONNECTION STATUS
+// ══════════════════════════════════════
+function setLiveMode(live){
+  const pill   = document.getElementById('connPill');
+  const text   = document.getElementById('connText');
+  const sub    = document.getElementById('connSub');
+  const badge  = document.getElementById('liveBadge');
+  const ltext  = document.getElementById('liveText');
+  const modeBar= document.getElementById('modeBar');
+  const subSen = document.getElementById('sensorSub');
+
+  if(live){
+    pill.className  = 'conn-pill live';
+    text.textContent= 'ESP32 Live';
+    sub.textContent = 'Active';
+    badge.className = 'tb-badge live';
+    ltext.textContent='Live Feed';
+    modeBar.className='mode-bar live-mode show';
+    modeBar.innerHTML='<span class="live-ring"></span>LIVE MODE — Real ESP32 sensor data streaming · Zone 5E · Updates every 5s';
+    if(subSen) subSen.textContent='Tactical Soil Stake — Zone 5E (ESP32 Live) · Singrauli Corridor';
+  } else {
+    pill.className  = 'conn-pill offline';
+    text.textContent= 'ESP32 Offline';
+    sub.textContent = 'Dataset';
+    badge.className = 'tb-badge' ;
+    badge.style.background='var(--amber-bg)';
+    badge.style.color='#b45309';
+    ltext.textContent='Dataset Mode';
+    modeBar.className='mode-bar dataset show';
+    modeBar.innerHTML='<span class="offline-ring"></span>DATASET MODE — ESP32 disconnected · Showing singrauli_sensor_data.csv values · Reconnects automatically';
+    if(subSen) subSen.textContent='Tactical Soil Stake — Zone 5E (Dataset Fallback) · Singrauli Corridor';
+  }
+}
+
+// ══════════════════════════════════════
+// SIMULATION
+// ══════════════════════════════════════
+let simOn=false, simIv=null, simCar=0.65;
+function toggleSim(){
+  const btn = document.getElementById('simBtn');
+  simOn = !simOn;
+  if(simOn){
+    btn.innerHTML='⏹ &nbsp;Stop Simulation';
+    btn.classList.add('running');
+    simCar = 0.65;
+    simIv = setInterval(()=>{
+      simCar = Math.max(simCar-0.005+(Math.random()-0.6)*0.003, 0.04);
+      zones[0].car = parseFloat(simCar.toFixed(3));
+      const c = simCar<0.25?'#f43f5e':simCar<0.40?'#f59e0b':simCar<0.65?'#0ea5e9':'#00c87a';
+      zones[0].color = c;
+      renderZones();
+      document.getElementById('map-1a').textContent = simCar.toFixed(3);
+      if(simCar<=0.04){
+        clearInterval(simIv); simOn=false;
+        btn.innerHTML='▶ &nbsp;Start Simulation';
+        btn.classList.remove('running');
+      }
+    },400);
+  } else {
+    clearInterval(simIv);
+    btn.innerHTML='▶ &nbsp;Start Simulation';
+    btn.classList.remove('running');
+  }
+}
+
+// ══════════════════════════════════════
+// MANUAL PREDICT
+// ══════════════════════════════════════
+function predictCAR(){
+  const m = +document.getElementById('i-moist').value||35;
+  const c = +document.getElementById('i-co2').value||500;
+  const t = +document.getElementById('i-temp').value||30;
+  const n = +document.getElementById('i-ndvi').value||0.4;
+  const car = calcCAR(c,m,t,n);
+  const risk = getRisk(car);
+  const color = getRiskColor(risk);
+  const pill  = getRiskPill(risk);
+  const recs  = {Stable:'No action needed. Continue monitoring.',Watch:'Monitor closely. Plan afforestation.',Warning:'Plant Vetiver. Backfill cavities.',Critical:'IMMEDIATE: Reroute convoys. Steel plates. Emergency BRaaS.'};
+  document.getElementById('r-car').textContent = car.toFixed(3);
+  document.getElementById('r-car').style.color = color;
+  document.getElementById('r-risk').innerHTML  = `<span class="pill ${pill}">${risk}</span>`;
+  document.getElementById('r-anom').innerHTML  = c>700&&car<0.25?`<span class="pill red">⚠ Anomaly</span>`:`<span class="pill green">✓ Normal</span>`;
+  document.getElementById('r-action').textContent = recs[risk];
+  document.getElementById('r-action').style.color = color;
+  document.getElementById('predResult').style.display='block';
+}
+
+// ══════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════
+Chart.defaults.font.family = 'DM Sans,sans-serif';
+Chart.defaults.color = '#8a9aab';
+
+function initCharts(screen){
+  if(screen==='overview'&&!charts.trend){
+    const nz = v=>+(v+(Math.random()-0.5)*0.025).toFixed(3);
+    charts.trend = new Chart(document.getElementById('trendChart'),{
+      type:'line',
+      data:{labels:['Jan','Feb','Mar','Apr','May','Jun'],datasets:[
+        {label:'Zone 1A',data:[nz(0.65),nz(0.55),nz(0.43),nz(0.35),nz(0.26),nz(0.19)],borderColor:'#f43f5e',backgroundColor:'rgba(244,63,94,0.06)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#f43f5e',pointBorderColor:'#fff',pointBorderWidth:2},
+        {label:'Zone 2B',data:[nz(0.71),nz(0.67),nz(0.59),nz(0.54),nz(0.49),nz(0.41)],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.04)',tension:0.4,fill:true,pointRadius:3},
+        {label:'Zone 5E',data:[nz(0.52),nz(0.50),nz(0.47),nz(0.44),nz(0.41),nz(0.40)],borderColor:'#00c87a',backgroundColor:'rgba(0,200,122,0.04)',tension:0.4,fill:true,pointRadius:3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,font:{size:11}}}},scales:{x:{grid:{display:false},border:{display:false}},y:{grid:{color:'rgba(15,25,35,0.06)'},border:{display:false},min:0,max:1}}}
+    });
+  }
+  if(screen==='sensors'&&!charts.sensor){
+    charts.sensor = new Chart(document.getElementById('sensorChart'),{
+      type:'line',
+      data:{labels:sensorHistory.labels,datasets:[
+        {label:'CO₂ (scaled)',data:sensorHistory.co2.map(v=>(v-380)/8.2),borderColor:'#f59e0b',tension:0.4,pointRadius:0,fill:false,borderWidth:2},
+        {label:'Moisture %',data:sensorHistory.moisture,borderColor:'#0ea5e9',tension:0.4,pointRadius:0,fill:false,borderWidth:2},
+        {label:'NDVI ×10',data:sensorHistory.ndvi,borderColor:'#00c87a',tension:0.4,pointRadius:0,fill:false,borderWidth:2},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,font:{size:11}}}},scales:{x:{grid:{display:false},border:{display:false},ticks:{maxTicksLimit:6}},y:{grid:{color:'rgba(15,25,35,0.06)'},border:{display:false}}}}
+    });
+  }
+  if(screen==='models'){
+    if(!charts.lstm){
+      let c2=0.196;
+      charts.lstm = new Chart(document.getElementById('lstmChart'),{
+        type:'line',
+        data:{labels:Array.from({length:25},(_,i)=>i===0?'Now':'+'+i+'h'),datasets:[{label:'Predicted CAR',data:Array.from({length:25},()=>{const v=c2;c2=Math.max(c2-0.008+(Math.random()-0.5)*0.003,0.02);return +v.toFixed(3);}),borderColor:'#0ea5e9',backgroundColor:'rgba(14,165,233,0.06)',tension:0.4,fill:true,pointRadius:2,borderDash:[4,2]}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,font:{size:11}}}},scales:{x:{grid:{display:false},border:{display:false},ticks:{maxTicksLimit:8}},y:{grid:{color:'rgba(15,25,35,0.06)'},border:{display:false},min:0,max:0.4}}}
+      });
+    }
+    if(!charts.feature){
+      charts.feature = new Chart(document.getElementById('featureChart'),{
+        type:'bar',
+        data:{labels:['NDVI','CO₂','Moisture','Temp','Vibration','Rainfall','Mining','Humidity'],datasets:[{data:[35,25,25,15,8,6,5,4],backgroundColor:['#00c87a','#f43f5e','#0ea5e9','#f59e0b','#f43f5e','#0ea5e9','#f59e0b','#8b5cf6'],borderRadius:5}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(15,25,35,0.06)'},border:{display:false}},y:{grid:{display:false},border:{display:false}}}}
+      });
+    }
+  }
+  if(screen==='braas'){
+    if(!charts.zone){
+      charts.zone = new Chart(document.getElementById('zoneChart'),{
+        type:'bar',
+        data:{labels:['Zone 1A','Zone 2B','Zone 3C','Zone 4D','Zone 5E'],datasets:[{data:[0.196,0.413,0.412,0.587,zones[4].car],backgroundColor:['#f43f5e','#f59e0b','#f59e0b','#0ea5e9','#00c87a'],borderRadius:8}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},border:{display:false}},y:{grid:{color:'rgba(15,25,35,0.06)'},border:{display:false},min:0,max:1}}}
+      });
+    }
+    if(!charts.recovery){
+      let r=0.196;
+      charts.recovery = new Chart(document.getElementById('recoveryChart'),{
+        type:'line',
+        data:{labels:['Now','W1','W2','W3','W4','W6','W8','W10','W12','W16','W20','W24'],datasets:[{label:'CAR Recovery',data:Array.from({length:12},()=>{const v=r;r=Math.min(r+0.05+(Math.random()-0.3)*0.01,0.75);return +v.toFixed(3);}),borderColor:'#00c87a',backgroundColor:'rgba(0,200,122,0.08)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#00c87a',pointBorderColor:'#fff',pointBorderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,font:{size:11}}}},scales:{x:{grid:{display:false},border:{display:false}},y:{grid:{color:'rgba(15,25,35,0.06)'},border:{display:false},min:0,max:1}}}
+      });
+    }
+  }
+}
+
+// ══════════════════════════════════════
+// START
+// ══════════════════════════════════════
+// Initial load with dataset
+useDataset();
+setLiveMode(false);
+setTimeout(()=>initCharts('overview'),200);
+
+// Start fetching — auto switches between live and dataset
+fetchLiveData();
+setInterval(fetchLiveData, FETCH_INTERVAL);
+</script>
+</body>
+</html>
